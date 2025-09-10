@@ -65,4 +65,4 @@ Le projet est configuré pour être déployé sur Vercel. Assurez-vous que le fi
 Les contributions sont les bienvenues ! N'hésitez pas à soumettre des demandes de tirage ou à ouvrir des problèmes pour discuter des améliorations.
 
 ## License
-Ce projet est sous licence MIT.
+Ce projet est sous licence MIT.# mon-plan-vital-root

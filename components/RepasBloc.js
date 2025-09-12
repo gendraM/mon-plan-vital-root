@@ -178,12 +178,15 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
         />
         <datalist id="categories">
           <option value="féculent" />
-          <option value="protéine" />
-          <option value="légume" />
+          <option value="protéines" />
+          <option value="légumes" />
           <option value="fruit" />
           <option value="extra" />
           <option value="poisson" />
           <option value="volaille" />
+          <option value="viande" />
+          <option value="boisson" />
+          <option value="produit laitier" />
         </datalist>
 
         <label>Quantité</label>

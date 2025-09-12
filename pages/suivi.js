@@ -337,8 +337,11 @@ export default function Suivi() {
   const [loading, setLoading] = useState(false);
   // Hook pour l'affichage de l'alerte calorique
   const [repasSemaine, setRepasSemaine] = useState([]);
-  // Calcul de l'historique hebdomadaire
-  const weeklyHistory = getWeeklyExtrasHistory(repasSemaine, selectedDate, 16);
+  // Calcul de l'historique hebdomadaire (client only pour éviter hydration error)
+  const [weeklyHistory, setWeeklyHistory] = useState([]);
+  useEffect(() => {
+    setWeeklyHistory(getWeeklyExtrasHistory(repasSemaine, selectedDate, 16));
+  }, [repasSemaine, selectedDate]);
   // Définition de extrasThisWeek à partir de l'historique
   const extrasThisWeek = weeklyHistory[0]?.count ?? 0;
   // Définition de extrasLastWeek et variation pour le feedback

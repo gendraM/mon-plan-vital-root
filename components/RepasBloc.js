@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import FlipNumbers from 'react-flip-numbers'
+// import FlipNumbers from 'react-flip-numbers'
 
 // Référentiel d'aliments de base
 const referentielAliments = [
@@ -55,36 +55,29 @@ const signauxSatieteList = [
   "Autre"
 ]
 
-export default function RepasBloc({ type, date, planCategorie, routineCount = 0, onSave, repasSemaine = [] }) {
-  const [aliment, setAliment] = useState('')
-  const [categorie, setCategorie] = useState('')
-  const [quantite, setQuantite] = useState('')
-  const [kcal, setKcal] = useState('')
-  const [estExtra, setEstExtra] = useState(false)
-  const [satiete, setSatiete] = useState('')
-  const [pourquoi, setPourquoi] = useState('')
-  const [ressenti, setRessenti] = useState('')
-  const [detailsSignaux, setDetailsSignaux] = useState([])
-  const [reactBloc, setReactBloc] = useState([])
-  const [showDefi, setShowDefi] = useState(false)
-  const [loadingKcal, setLoadingKcal] = useState(false)
-
-  // Suggestions Nutritionix
-  const [suggestions, setSuggestions] = useState([])
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
-
-  // --- Compteur d'extras restants cette semaine ---
-  const quota = 3 // quota hebdo d'extras, adapte selon ton besoin
-  const extrasCount = repasSemaine.filter(r => r.est_extra).length
-  const extrasRestants = Math.max(0, quota - extrasCount)
+export default function RepasBloc({ type, date, planCategorie, routineCount = 0, onSave, repasSemaine = [], extrasRestants }) {
+  // Validation stricte des props
+  extrasRestants = typeof extrasRestants === 'number' && !isNaN(extrasRestants) ? extrasRestants : 0;
+  const [aliment, setAliment] = useState('');
+  const [categorie, setCategorie] = useState('');
+  const [quantite, setQuantite] = useState('');
+  const [kcal, setKcal] = useState('');
+  const [estExtra, setEstExtra] = useState(false);
+  const [satiete, setSatiete] = useState('');
+  const [pourquoi, setPourquoi] = useState('');
+  const [ressenti, setRessenti] = useState('');
+  const [detailsSignaux, setDetailsSignaux] = useState([]);
+  const [reactBloc, setReactBloc] = useState([]);
+  const [showDefi, setShowDefi] = useState(false);
+  const [loadingKcal, setLoadingKcal] = useState(false);
+  // ...existing code...
 
   // Suggestion automatique de catégorie et kcal selon l'aliment choisi (référentiel)
+  // Remplissage automatique de la catégorie selon l'aliment saisi (référentiel local uniquement)
   useEffect(() => {
     const found = referentielAliments.find(a => a.nom.toLowerCase() === aliment.toLowerCase())
     if (found) {
       setCategorie(found.categorie)
-      setKcal(found.kcal)
-      setEstExtra(found.categorie === "extra")
     }
   }, [aliment])
 
@@ -99,60 +92,9 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
     }
   }, [aliment, quantite])
 
-  // --- AJOUT AUTOMATIQUE DES KCAL POUR ALIMENTS NON RÉFÉRENCÉS ---
-  useEffect(() => {
-    const found = referentielAliments.find(a => a.nom.toLowerCase() === aliment.toLowerCase())
-    if (!found && aliment && quantite) {
-      setLoadingKcal(true)
-      axios.get(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(aliment)}&search_simple=1&action=process&json=1&page_size=1`)
-        .then(res => {
-          const produit = res.data.products[0]
-          if (produit && produit.nutriments && produit.nutriments['energy-kcal_100g']) {
-            const kcalPour100g = produit.nutriments['energy-kcal_100g']
-            const quantiteNum = parseFloat(quantite)
-            const kcalTotal = ((quantiteNum * kcalPour100g) / 100).toFixed(0)
-            setKcal(kcalTotal)
-          } else {
-            setKcal('')
-          }
-        })
-        .catch(() => setKcal(''))
-        .finally(() => setLoadingKcal(false))
-    }
-    // eslint-disable-next-line
-  }, [aliment, quantite])
-  // --- FIN AJOUT AUTOMATIQUE DES KCAL ---
 
-  // Suggestions Nutritionix (recherche intelligente)
-  useEffect(() => {
-    if (aliment && aliment.length > 1) {
-      setLoadingSuggestions(true)
-      axios
-        .get('https://trackapi.nutritionix.com/v2/search/instant', {
-          params: { query: aliment, branded: true, common: true },
-          headers: {
-            'x-app-id': 'e50d45e3',
-            'x-app-key': '214c19713df698bea9803bebbf42846f'
-          }
-        })
-        .then((res) => {
-          const produits = [
-            ...(res.data.common || []),
-            ...(res.data.branded || [])
-          ]
-          const suggestions = produits.map((p) => ({
-            nom: p.food_name || p.brand_name_item_name || "Aliment inconnu",
-            categorie: p.tags ? p.tags.food_group || "non catégorisé" : "non catégorisé",
-            kcal: p.nf_calories || p.full_nutrients?.find(n => n.attr_id === 208)?.value || 0,
-          }))
-          setSuggestions(suggestions)
-        })
-        .catch(() => setSuggestions([]))
-        .finally(() => setLoadingSuggestions(false))
-    } else {
-      setSuggestions([])
-    }
-  }, [aliment])
+
+  // ...existing code...
 
   useEffect(() => {
     const context = { estExtra, satiete, categorie, planCategorie, routineCount, extrasRestants }
@@ -177,7 +119,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
     setPourquoi('')
     setRessenti('')
     setDetailsSignaux([])
-    setSuggestions([])
+    // setSuggestions([])
   }
 
   const handleAccepteDefi = () => {
@@ -212,7 +154,6 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
           play
           numbers={`${extrasRestants}`}
         />
-        <span style={{ color: '#888', marginLeft: 8 }}>/ {quota}</span>
       </div>
 
       <form onSubmit={handleSubmit} style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24 }}>
@@ -226,36 +167,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
           required
           style={{ marginBottom: 0 }}
         />
-        {/* Suggestions Nutritionix */}
-        {loadingSuggestions && <div style={{ fontSize: 13, marginTop: 6 }}>Recherche en cours...</div>}
-        {suggestions.length > 0 && (
-          <ul style={{
-            background: "#f9f9f9",
-            border: "1px solid #ccc",
-            borderRadius: 8,
-            padding: 8,
-            marginTop: 4,
-            fontSize: 14,
-            boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
-            maxHeight: 180,
-            overflowY: "auto"
-          }}>
-            {suggestions.map((s, index) => (
-              <li
-                key={index}
-                onClick={() => {
-                  setAliment(s.nom)
-                  setCategorie(s.categorie)
-                  setKcal(s.kcal)
-                  setSuggestions([])
-                }}
-                style={{ cursor: "pointer", padding: 4, transition: "background 0.12s" }}
-              >
-                {s.nom} - {s.kcal} kcal
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* ...existing code... */}
 
         <label>Catégorie</label>
         <input
@@ -278,12 +190,12 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
         <input value={quantite} onChange={e => setQuantite(e.target.value)} required />
 
         <label>Kcal {loadingKcal && "(recherche...)"}</label>
-        <input value={kcal} onChange={e => setKcal(e.target.value)} readOnly={loadingKcal} />
+  <input value={kcal} onChange={e => setKcal(e.target.value)} />
 
         {/* Message d'aide si kcal non trouvées automatiquement */}
-        {aliment && quantite && !kcal && !loadingKcal && (
+        {aliment && quantite && !kcal && (
           <div style={{ color: "#b71c1c", marginBottom: 8 }}>
-            Calories non trouvées automatiquement. Merci de les saisir manuellement.
+            Calories non trouvées dans le référentiel. Merci de les saisir manuellement.
           </div>
         )}
 

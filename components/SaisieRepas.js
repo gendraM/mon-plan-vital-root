@@ -11,8 +11,7 @@ const SaisieRepas = () => {
             setErreur('Veuillez remplir tous les champs.');
             return;
         }
-        // Logique pour soumettre les données du repas
-        console.log(`Repas: ${repas}, Quantité: ${quantite}`);
+        // Ici, on soumet simplement les données sans API intelligente
         setRepas('');
         setQuantite('');
         setErreur('');

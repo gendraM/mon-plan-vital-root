@@ -145,6 +145,12 @@ export default function Repas() {
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
+      <button
+        onClick={() => window.history.back()}
+        style={{ marginBottom: 16, background: "#1976d2", color: "#fff", border: "none", borderRadius: 6, padding: "8px 20px", cursor: "pointer" }}
+      >
+        ← Retour
+      </button>
       <h1 style={{ textAlign: "center", marginBottom: 24 }}>🗑️ Gérer mes repas</h1>
 
       {/* Formulaire d'édition (s'affiche uniquement si on est en mode édition) */}

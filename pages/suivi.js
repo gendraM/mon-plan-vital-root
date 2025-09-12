@@ -786,7 +786,7 @@ export default function Suivi() {
               type={selectedType}
               date={selectedDate}
               planCategorie={repasPlan[selectedType]?.categorie}
-              extrasRestants={extrasRestants}
+              extrasRestants={typeof extrasRestants === 'number' && !isNaN(extrasRestants) ? extrasRestants : 0}
               onSave={handleSaveRepas}
               setSnackbar={setSnackbar}
               repasSemaine={repasSemaine}

@@ -70,6 +70,34 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
   const [reactBloc, setReactBloc] = useState([]);
   const [showDefi, setShowDefi] = useState(false);
   const [loadingKcal, setLoadingKcal] = useState(false);
+  // Ajout pour gestion validation semaine
+  const [semaineValidee, setSemaineValidee] = useState(false);
+  const semaineCouranteDate = date; // à adapter si besoin (date du dimanche)
+  // Charger l'état de validation de la semaine
+  useEffect(() => {
+    async function fetchValidation() {
+      // Remplacer par l'appel réel à Supabase
+      // Exemple :
+      // const { data } = await supabase.from('semaines_validees').select('validee').eq('weekStart', semaineCouranteDate).single();
+      // setSemaineValidee(data?.validee === true);
+      // Pour démo, on laisse à false
+    }
+    fetchValidation();
+  }, [semaineCouranteDate]);
+  // Handler pour dévalider
+  async function handleDevalider() {
+    // Remplacer par l'appel réel à Supabase
+    // await supabase.from('semaines_validees').update({ validee: false }).eq('weekStart', semaineCouranteDate);
+    setSemaineValidee(false);
+    // Rafraîchir la liste ou l’état local si besoin
+  }
+  // Handler pour valider
+  async function handleValider() {
+    // Remplacer par l'appel réel à Supabase
+    // await supabase.from('semaines_validees').upsert({ weekStart: semaineCouranteDate, validee: true });
+    setSemaineValidee(true);
+    // Rafraîchir la liste ou l’état local si besoin
+  }
   // ...existing code...
 
   // Suggestion automatique de catégorie et kcal selon l'aliment choisi (référentiel)

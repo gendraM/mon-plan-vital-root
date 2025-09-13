@@ -90,6 +90,29 @@ function RepasForm({ initial, onCancel, onSave }) {
 }
 
 export default function Repas() {
+  // Handler pour valider la semaine (dîner du dimanche)
+  async function handleValiderSemaine(r) {
+    // Remplacer par l'appel réel à Supabase
+    // await supabase.from('semaines_validees').upsert({ weekStart: r.date, validee: true });
+    // Mettre à jour l’état local si besoin
+    setRepas(repas.map(rep =>
+      rep.date === r.date && rep.type === "Dîner"
+        ? { ...rep, validee: true }
+        : rep
+    ));
+  }
+
+  // Handler pour dévalider la semaine (dîner du dimanche)
+  async function handleDevaliderSemaine(r) {
+    // Remplacer par l'appel réel à Supabase
+    // await supabase.from('semaines_validees').update({ validee: false }).eq('weekStart', r.date);
+    // Mettre à jour l’état local si besoin
+    setRepas(repas.map(rep =>
+      rep.date === r.date && rep.type === "Dîner"
+        ? { ...rep, validee: false }
+        : rep
+    ));
+  }
   const [repas, setRepas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editRepas, setEditRepas] = useState(null); // Pour le repas en cours d'édition
@@ -182,7 +205,72 @@ export default function Repas() {
           <tbody>
             {repas.map((r) => (
               <tr key={r.id}>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.date}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd", position: 'relative' }}>
+                  {r.date}
+                  {/* Affichage validation semaine et boutons UNIQUEMENT pour le dîner du dimanche */}
+                  {(() => {
+                    const d = new Date(r.date);
+                    if (d.getDay() === 0 && r.type === "Dîner") {
+                      return (
+                        <span style={{
+                          marginLeft: 8,
+                          fontWeight: 700,
+                          color: r.validee ? '#43a047' : '#e53935',
+                          fontSize: 13,
+                          background: r.validee ? '#e8f5e9' : '#fffbe6',
+                          borderRadius: 6,
+                          padding: '2px 8px',
+                          border: r.validee ? '1px solid #43a047' : '1px solid #e53935',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          {r.validee ? 'Semaine validée' : 'Non validée'}
+                          {r.validee ? (
+                            <button
+                              type="button"
+                              style={{
+                                background: "#b71c1c",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "2px 10px",
+                                fontWeight: 600,
+                                fontSize: 14,
+                                cursor: "pointer",
+                                marginLeft: 8
+                              }}
+                              onClick={() => handleDevaliderSemaine(r)}
+                              title="Dévalider la semaine"
+                            >
+                              ❌
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              style={{
+                                background: "#43a047",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "2px 10px",
+                                fontWeight: 600,
+                                fontSize: 14,
+                                cursor: "pointer",
+                                marginLeft: 8
+                              }}
+                              onClick={() => handleValiderSemaine(r)}
+                              title="Valider la semaine"
+                            >
+                              ✓
+                            </button>
+                          )}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                </td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.type}</td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.aliment}</td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.categorie}</td>

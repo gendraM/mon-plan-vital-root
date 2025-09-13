@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Line, Pie, Doughnut } from "react-chartjs-2";
+import TimelineProgression from "../components/TimelineProgression";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -249,6 +250,51 @@ export default function TableauDeBord() {
   const [badges, setBadges] = useState([]);
   const [repasReels, setRepasReels] = useState([]);
   const [loading, setLoading] = useState(true);
+
+    // Historique des extras validés (récupéré depuis la logique du suivi)
+    const [weeklyHistory, setWeeklyHistory] = useState([]);
+    useEffect(() => {
+      // On récupère les repas de la période et on construit l'historique
+      if (Array.isArray(repasReels) && repasReels.length > 0) {
+        // Utilitaire pour calculer l'historique des extras par semaine
+        function getWeeklyExtrasHistory(repas, nbWeeks = 16) {
+          let today = new Date();
+          let weeks = [];
+          let calcMonday = (d) => {
+            let date = new Date(d);
+            let day = date.getDay();
+            let monday = new Date(date);
+            monday.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+            monday.setHours(0,0,0,0);
+            return monday;
+          };
+          let monday = calcMonday(today);
+          for(let i=0; i<nbWeeks; i++) {
+            let weekStart = new Date(monday);
+            weekStart.setDate(monday.getDate() - (i*7));
+            weekStart.setHours(0,0,0,0);
+            let weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+            // Récupérer la validation depuis la table semaines_validees
+            // On suppose que la liste des semaines validées est accessible (à adapter si besoin)
+            // Pour robustesse, on filtre sur la date exacte
+            let semaineValidee = semainesValidees?.find(sv => sv.weekStart === weekStart.toISOString().slice(0,10) && sv.validee === true);
+            let count = repas.filter(r => {
+              let d = new Date(r.date);
+              d.setHours(0,0,0,0);
+              return d >= weekStart && d <= weekEnd && r.est_extra;
+            }).length;
+            weeks.push({
+              weekStart: weekStart.toISOString().slice(0,10),
+              count,
+              isCurrent: (i === 0),
+              validee: !!semaineValidee
+            });
+          }
+          return weeks;
+        }
+        setWeeklyHistory(getWeeklyExtrasHistory(repasReels, 16));
+      }
+    }, [repasReels]);
 
   // Progression badge/message
   const [progression, setProgression] = useState({
@@ -573,6 +619,8 @@ export default function TableauDeBord() {
         </div>
 
         {/* --- Section Succès / Badges --- */}
+      {/* --- Timeline visuelle façon Instagram/TikTok --- */}
+      <TimelineProgression history={weeklyHistory} />
         <div
           style={{
             padding: "1.5rem",

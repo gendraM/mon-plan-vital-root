@@ -1,8 +1,10 @@
+// ----------- HANDLER POUR LA SAUVEGARDE D'UN REPAS -----------
+// La fonction handleSaveRepas est définie plus bas dans le composant principal, après l’import unique de Supabase.
 import React, { useState, useEffect, useRef } from 'react';
-// ...existing code...
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import RepasBloc from "../components/RepasBloc";
+import TimelineProgression from "../components/TimelineProgression";
 
 // Utilitaire message cyclique
 function pickMessage(array, key) {
@@ -322,6 +324,22 @@ function ZoneBadgesProgression({ progression, history, palier }) {
 
 // MAIN COMPONENT
 export default function Suivi() {
+  // ----------- HANDLER POUR LA SAUVEGARDE D'UN REPAS -----------
+  const handleSaveRepas = async (repasData) => {
+    try {
+      // Enregistrement du repas dans Supabase
+      const { data, error } = await supabase
+        .from("repas")
+        .insert([repasData]);
+      if (error) {
+        setSnackbar({ open: true, message: "Erreur Supabase : " + error.message, type: "error" });
+        return;
+      }
+      setSnackbar({ open: true, message: "Repas enregistré !", type: "success" });
+    } catch (error) {
+      setSnackbar({ open: true, message: "Erreur lors de l'enregistrement du repas.", type: "error" });
+    }
+  };
   // ...tous les hooks, useEffect et logique métier ici...
   // ...calculs et logique...
   // ...handlers et fonctions utilitaires...
@@ -357,7 +375,20 @@ export default function Suivi() {
   // Calcul de l'historique hebdomadaire (client only pour éviter hydration error)
   const [weeklyHistory, setWeeklyHistory] = useState([]);
   useEffect(() => {
-    setWeeklyHistory(getWeeklyExtrasHistory(repasSemaine, selectedDate, 16));
+    async function fetchHistory() {
+      const history = getWeeklyExtrasHistory(repasSemaine, selectedDate, 16);
+      // Récupérer les semaines validées depuis Supabase
+      const { data: semainesValidees } = await supabase
+  .from('semaines_validees')
+        .select('weekStart, validee');
+      // Fusionner le flag de validation
+      const historyWithValidation = history.map(week => {
+        const valid = semainesValidees?.find(s => s.weekStart === week.weekStart)?.validee === true;
+        return { ...week, validee: valid };
+      });
+      setWeeklyHistory(historyWithValidation);
+    }
+    fetchHistory();
   }, [repasSemaine, selectedDate]);
   // Définition de extrasThisWeek à partir de l'historique
   const extrasThisWeek = weeklyHistory[0]?.count ?? 0;
@@ -407,11 +438,14 @@ export default function Suivi() {
 
   // ----------- LOGIQUE D'AFFICHAGE DYNAMIQUE MOTIVATION -----------
   const today = new Date();
+  const selected = new Date(selectedDate);
   const dayOfWeek = today.getDay();
+  const selectedDayOfWeek = selected.getDay();
   const extrasEnCours = extrasThisWeek;
   let messageMotivation = null;
   let showComparatif = false;
   let showValidation = false;
+  // Motivation selon le jour réel
   if (dayOfWeek >= 1 && dayOfWeek <= 3) {
     messageMotivation = `Nouvelle semaine, nouveaux objectifs ! Palier actuel : ${currentPalier} extras/semaine.`;
     showComparatif = false;
@@ -426,8 +460,11 @@ export default function Suivi() {
   }
   if (dayOfWeek === 0) {
     showComparatif = true;
-    showValidation = true;
     messageMotivation = null;
+  }
+  // Affichage du bouton validation si la date sélectionnée est un dimanche
+  if (selectedDayOfWeek === 0) {
+    showValidation = true;
   }
 
   // ----------- HANDLER DE RAFRAÎCHISSEMENT -----------
@@ -436,6 +473,39 @@ export default function Suivi() {
     // Si vous avez une fonction fetchData, appelez-la ici
     if (typeof window !== 'undefined') {
       window.location.reload(); // Solution simple pour recharger la page
+    }
+  };
+  // ----------- HANDLER DE VALIDATION DE LA SEMAINE -----------
+  const handleValiderSemaine = async () => {
+    try {
+      // Calculer la date de début de la semaine sélectionnée
+      const selectedWeekStart = (() => {
+        const selectedDateObj = new Date(selectedDate);
+        const day = selectedDateObj.getDay();
+        const monday = new Date(selectedDateObj);
+        monday.setDate(selectedDateObj.getDate() - (day === 0 ? 6 : day - 1));
+        monday.setHours(0,0,0,0);
+        return monday.toISOString().slice(0,10);
+      })();
+      // Persister la validation dans Supabase
+      const { error } = await supabase.from('semaines_validees').upsert([{ weekStart: selectedWeekStart, validee: true }]);
+      if (error) {
+        setSnackbar({ open: true, message: error.message || "Erreur lors de la validation.", type: "error" });
+        return;
+      }
+      setSnackbar({ open: true, message: "Semaine validée avec succès !", type: "info" });
+      // Recharger l’historique pour mettre à jour la timeline
+      const history = getWeeklyExtrasHistory(repasSemaine, selectedDate, 16);
+      const { data: semainesValidees } = await supabase
+  .from('semaines_validees')
+        .select('weekStart, validee');
+      const historyWithValidation = history.map(week => {
+        const valid = semainesValidees?.find(s => s.weekStart === week.weekStart)?.validee === true;
+        return { ...week, validee: valid };
+      });
+      setWeeklyHistory(historyWithValidation);
+    } catch (e) {
+      setSnackbar({ open: true, message: "Erreur lors de la validation.", type: "error" });
     }
   };
   // ----------- AFFICHAGE -----------
@@ -624,8 +694,12 @@ export default function Suivi() {
         </div>
       )}
 
-      {/* --------- ZONE 2 : Progression / badges --------- */}
-      <ZoneBadgesProgression progression={progression} history={weeklyHistory} palier={currentPalier} />
+
+  {/* --------- ZONE 2 : Progression / badges --------- */}
+  <ZoneBadgesProgression progression={progression} history={weeklyHistory} palier={currentPalier} />
+
+  {/* --------- Timeline visuelle façon Instagram/TikTok --------- */}
+  <TimelineProgression history={weeklyHistory} />
 
       {/* Modal info règle des extras */}
       {showInfo && (
@@ -749,6 +823,32 @@ export default function Suivi() {
               setSnackbar={setSnackbar}
               repasSemaine={repasSemaine}
             />
+            {/* Bouton de validation de la semaine, affiché uniquement si showValidation est vrai */}
+            {showValidation && (
+              (selectedType === "Dîner" && new Date(selectedDate).getDay() === 0) && (
+                <div style={{ textAlign: 'center', marginTop: 18 }}>
+                  <button
+                    style={{
+                      background: '#43a047',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 18,
+                      padding: '10px 28px',
+                      fontWeight: 700,
+                      fontSize: 17,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px #43a04733',
+                      transition: 'background 0.2s',
+                      marginTop: 8
+                    }}
+                    onClick={handleValiderSemaine}
+                    aria-label="Valider la semaine"
+                  >
+                    ✅ Valider ma semaine
+                  </button>
+                </div>
+              )
+            )}
             <div style={{ textAlign: 'center', marginTop: 16 }}>
               <button
                 style={{

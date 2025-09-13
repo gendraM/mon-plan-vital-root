@@ -1,3 +1,16 @@
+  // Handler pour la sauvegarde d’un repas (à adapter selon la logique métier)
+  const handleSaveRepas = async (nouveauRepas) => {
+    // Ajout du repas dans la base Supabase
+    const { error } = await supabase.from('repas_reels').insert([nouveauRepas]);
+    if (!error) {
+      setSnackbar({ open: true, message: 'Repas enregistré !', type: 'success' });
+      // Recharge la liste des repas
+      const { data } = await supabase.from('repas_reels').select('*').order('date', { ascending: false });
+      if (Array.isArray(data)) setRepasSemaine(data);
+    } else {
+      setSnackbar({ open: true, message: 'Erreur lors de l’enregistrement', type: 'error' });
+    }
+  };
 // ...existing code...
 import RepasBloc from "../components/RepasBloc";
 import { supabase } from '../lib/supabaseClient';
@@ -335,8 +348,25 @@ export default function Suivi() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0,10));
   const [showInfo, setShowInfo] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Déclaration du plan de repas (à adapter selon la logique métier)
+  const [repasPlan, setRepasPlan] = useState({});
   // Hook pour l'affichage de l'alerte calorique
   const [repasSemaine, setRepasSemaine] = useState([]);
+
+  // Chargement automatique des repas depuis Supabase
+  useEffect(() => {
+    async function fetchRepas() {
+      const { data, error } = await supabase
+        .from('repas_reels')
+        .select('*')
+        .order('date', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        setRepasSemaine(data);
+      }
+    }
+    fetchRepas();
+  }, []);
   // Calcul de l'historique hebdomadaire (client only pour éviter hydration error)
   const [weeklyHistory, setWeeklyHistory] = useState([]);
   useEffect(() => {
@@ -350,10 +380,14 @@ export default function Suivi() {
     ? weeklyHistory[0].count - weeklyHistory[1].count
     : 0;
 
+  // Calcul du palier et de l'objectif final
+  const currentPalier = getWeeklyPalier(weeklyHistory);
+  const objectifFinal = 1;
+
   // ----------- CALCUL DES EXTRAS HORS QUOTA -----------
   // On considère hors quota si le nombre d'extras dépasse le palier
   const extrasHorsQuota = repasSemaine.filter((r) => r.est_extra && extrasThisWeek > currentPalier);
-  // Calcul du palier et de l'objectif final
+
   // Calcul du score calorique du jour (en pourcentage)
   const scoreCalorique = (objectifCalorique && caloriesDuJour)
     ? Math.round((caloriesDuJour / objectifCalorique) * 100)
@@ -361,8 +395,6 @@ export default function Suivi() {
   // Calcul du score discipline journalier et hebdomadaire (placeholders, à adapter selon logique métier)
   const scoreJournalier = 0;
   const scoreHebdomadaire = 0;
-  const currentPalier = getWeeklyPalier(weeklyHistory);
-  const objectifFinal = 1;
   // Progression pour les badges
   const progression = getProgressionMessage(weeklyHistory, currentPalier);
 

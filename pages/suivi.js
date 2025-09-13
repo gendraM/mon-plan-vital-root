@@ -346,8 +346,8 @@ export default function Suivi() {
   // ----------- HOOKS PRINCIPAUX -----------
   const [selectedType, setSelectedType] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', type: 'info' });
-  // Ajout des hooks pour l’objectif calorique et les calories du jour
-  const [objectifCalorique, setObjectifCalorique] = useState(null);
+  // Objectif calorique et calories du jour
+  const [objectifCalorique, setObjectifCalorique] = useState(1800); // Valeur par défaut, à personnaliser
   const [caloriesDuJour, setCaloriesDuJour] = useState(0);
   // Ajout des hooks manquants pour la cohérence
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0,10));
@@ -368,10 +368,14 @@ export default function Suivi() {
         .order('date', { ascending: false });
       if (!error && Array.isArray(data)) {
         setRepasSemaine(data);
+        // Calculer les calories du jour à partir des repas du jour
+        const repasDuJour = data.filter(r => r.date === selectedDate);
+        const totalCalories = repasDuJour.reduce((sum, r) => sum + (r.kcal ? Number(r.kcal) : 0), 0);
+        setCaloriesDuJour(totalCalories);
       }
     }
     fetchRepas();
-  }, []);
+  }, [selectedDate]);
   // Calcul de l'historique hebdomadaire (client only pour éviter hydration error)
   const [weeklyHistory, setWeeklyHistory] = useState([]);
   useEffect(() => {

@@ -90,6 +90,37 @@ function RepasForm({ initial, onCancel, onSave }) {
 }
 
 export default function Repas() {
+  const [repas, setRepas] = useState([]);
+  const [repasDebug, setRepasDebug] = useState([]);
+  // Initialisation des variables pour le calcul calorique
+  const [objectifCalorique, setObjectifCalorique] = useState(null);
+  const [caloriesDuJour, setCaloriesDuJour] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0,10));
+
+  // Calcul de l’objectif calorique (exemple : valeur fixe ou à récupérer du profil)
+  useEffect(() => {
+    // À adapter selon la logique métier (profil, formule, etc.)
+    setObjectifCalorique(1800); // Valeur fixe pour démo
+  }, []);
+
+  // Calcul dynamique des calories consommées pour la date sélectionnée
+  useEffect(() => {
+    async function fetchCaloriesForDay(dateRef) {
+      const { data, error } = await supabase
+        .from("repas_reels")
+        .select("kcal, date, type, aliment")
+        .eq("date", dateRef);
+      if (!error && Array.isArray(data)) {
+        setRepasDebug(data);
+        const total = data.reduce((sum, r) => sum + (parseInt(r.kcal, 10) || 0), 0);
+        setCaloriesDuJour(total);
+      } else {
+        setRepasDebug([]);
+        setCaloriesDuJour(0);
+      }
+    }
+    fetchCaloriesForDay(selectedDate);
+  }, [selectedDate, repas]);
   // Handler pour valider la semaine (dîner du dimanche)
   async function handleValiderSemaine(r) {
     // Remplacer par l'appel réel à Supabase
@@ -113,7 +144,6 @@ export default function Repas() {
         : rep
     ));
   }
-  const [repas, setRepas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editRepas, setEditRepas] = useState(null); // Pour le repas en cours d'édition
 
@@ -168,6 +198,41 @@ export default function Repas() {
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
+      {/* Suivi calorique du jour dynamique avec date de référence bien visible */}
+      <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px #1976d211", padding: 18, marginBottom: 12 }}>
+        <div style={{ fontWeight: 600, fontSize: 22, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span role="img" aria-label="bol">🥗</span> Suivi alimentaire du jour
+          <span style={{ fontWeight: 700, color: "#1976d2", fontSize: 18, background: '#e3f2fd', borderRadius: 8, padding: '4px 12px', marginLeft: 12 }}>
+            {selectedDate}
+          </span>
+        </div>
+        <div>
+          <span style={{ fontWeight: 600, color: "#888" }}>Objectif calorique du jour : </span>
+          <span style={{ fontWeight: 700, color: "#ff9800", fontSize: 18 }}>
+            {(objectifCalorique !== null && objectifCalorique !== undefined) ? `${objectifCalorique} kcal` : "…"}
+          </span>
+        </div>
+        <div>
+          <span style={{ fontWeight: 600, color: "#888" }}>Consommé ce jour : </span>
+          <span style={{ fontWeight: 700, color: "#1976d2", fontSize: 18 }}>
+            {caloriesDuJour} kcal
+          </span>
+        </div>
+        <div>
+          <span style={{ fontWeight: 600, color: "#888" }}>Reste à consommer : </span>
+          <span style={{
+            fontWeight: 700,
+            color: caloriesDuJour > objectifCalorique ? "#e53935" : "#43a047",
+            fontSize: 18
+          }}>
+            {(objectifCalorique !== null && objectifCalorique !== undefined && caloriesDuJour !== null)
+              ? (objectifCalorique - caloriesDuJour) + " kcal"
+              : "..."}
+          </span>
+        </div>
+      </div>
+      {/* Debug : liste des repas du jour et leurs calories (toujours visible) */}
+      {/* Bloc debug supprimé, affichage calories uniquement dans suivi.js */}
       <button
         onClick={() => window.history.back()}
         style={{ marginBottom: 16, background: "#1976d2", color: "#fff", border: "none", borderRadius: 6, padding: "8px 20px", cursor: "pointer" }}

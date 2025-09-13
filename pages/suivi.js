@@ -354,27 +354,43 @@ export default function Suivi() {
   const [showInfo, setShowInfo] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Déclaration du plan de repas (à adapter selon la logique métier)
+  // Plan de repas du jour (repas planifiés)
   const [repasPlan, setRepasPlan] = useState({});
   // Hook pour l'affichage de l'alerte calorique
   const [repasSemaine, setRepasSemaine] = useState([]);
 
-  // Chargement automatique des repas depuis Supabase
+  // Chargement automatique des repas et du plan depuis Supabase
   useEffect(() => {
-    async function fetchRepas() {
-      const { data, error } = await supabase
+    async function fetchRepasEtPlan() {
+      // Repas réels
+      const { data: repasData, error: repasError } = await supabase
         .from('repas_reels')
         .select('*')
         .order('date', { ascending: false });
-      if (!error && Array.isArray(data)) {
-        setRepasSemaine(data);
+      if (!repasError && Array.isArray(repasData)) {
+        setRepasSemaine(repasData);
         // Calculer les calories du jour à partir des repas du jour
-        const repasDuJour = data.filter(r => r.date === selectedDate);
+        const repasDuJour = repasData.filter(r => r.date === selectedDate);
         const totalCalories = repasDuJour.reduce((sum, r) => sum + (r.kcal ? Number(r.kcal) : 0), 0);
         setCaloriesDuJour(totalCalories);
       }
+      // Repas planifiés
+      const { data: planData, error: planError } = await supabase
+        .from('repas_planifies')
+        .select('*')
+        .eq('date', selectedDate);
+      if (!planError && Array.isArray(planData)) {
+        // Construire un objet { type: { aliment, categorie } }
+        const planObj = {};
+        planData.forEach(r => {
+          planObj[r.type] = { aliment: r.aliment, categorie: r.categorie };
+        });
+        setRepasPlan(planObj);
+      } else {
+        setRepasPlan({});
+      }
     }
-    fetchRepas();
+    fetchRepasEtPlan();
   }, [selectedDate]);
   // Calcul de l'historique hebdomadaire (client only pour éviter hydration error)
   const [weeklyHistory, setWeeklyHistory] = useState([]);

@@ -430,9 +430,32 @@ export default function Suivi() {
   const scoreCalorique = (objectifCalorique && caloriesDuJour)
     ? Math.round((caloriesDuJour / objectifCalorique) * 100)
     : 0;
-  // Calcul du score discipline journalier et hebdomadaire (placeholders, à adapter selon logique métier)
-  const scoreJournalier = 0;
-  const scoreHebdomadaire = 0;
+  // Calcul du score discipline journalier (repas alignés)
+  const repasDuJour = repasSemaine.filter(r => r.date === selectedDate);
+  let nbAlignes = 0;
+  repasDuJour.forEach(r => {
+    const plan = repasPlan[r.type];
+    if (plan && plan.aliment && r.aliment && plan.aliment.trim().toLowerCase() === r.aliment.trim().toLowerCase()) {
+      nbAlignes++;
+    }
+  });
+  const scoreJournalier = repasDuJour.length > 0 ? Math.round((nbAlignes / repasDuJour.length) * 100) : 0;
+  // Score hebdomadaire (repas alignés sur la semaine)
+  const semaineDates = repasSemaine.filter(r => {
+    const d = new Date(r.date);
+    const s = new Date(selectedDate);
+    const monday = new Date(s); monday.setDate(s.getDate() - (s.getDay() === 0 ? 6 : s.getDay() - 1));
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    return d >= monday && d <= sunday;
+  });
+  let nbAlignesHebdo = 0;
+  semaineDates.forEach(r => {
+    const plan = repasPlan[r.type];
+    if (plan && plan.aliment && r.aliment && plan.aliment.trim().toLowerCase() === r.aliment.trim().toLowerCase()) {
+      nbAlignesHebdo++;
+    }
+  });
+  const scoreHebdomadaire = semaineDates.length > 0 ? Math.round((nbAlignesHebdo / semaineDates.length) * 100) : 0;
   // Progression pour les badges
   const progression = getProgressionMessage(weeklyHistory, currentPalier);
 

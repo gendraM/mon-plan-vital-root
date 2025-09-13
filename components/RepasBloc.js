@@ -56,6 +56,54 @@ const signauxSatieteList = [
 ]
 
 export default function RepasBloc({ type, date, planCategorie, routineCount = 0, onSave, repasSemaine = [], extrasRestants }) {
+  // Ajout Fast food (déclaration unique, checklist respectée)
+  const [isFastFood, setIsFastFood] = useState(false);
+  const [fastFoodType, setFastFoodType] = useState('');
+  const fastFoodList = ["McDo", "KFC", "Kebab", "Burger King", "Subway", "Autre"];
+  const [fastFoodHistory, setFastFoodHistory] = useState([]);
+  const [fastFoodReward, setFastFoodReward] = useState(false);
+  const [fastFoodAliments, setFastFoodAliments] = useState([{ nom: '', quantite: '', kcal: '' }]);
+
+  // Vérification de la règle fast food
+  useEffect(() => {
+    if (!isFastFood) return;
+    // Filtrer l’historique pour ne garder que les fast food
+    const fastFoodRepas = repasSemaine.filter(r => r.isFastFood || r.fastFoodType);
+    setFastFoodHistory(fastFoodRepas);
+    if (fastFoodRepas.length > 0) {
+      // Dernier fast food
+      const lastFastFood = fastFoodRepas[fastFoodRepas.length - 1];
+      const lastDate = new Date(lastFastFood.date);
+      const currentDate = new Date(date);
+      const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+      // Récompense si délai respecté
+      setFastFoodReward(diffDays >= 45);
+    } else {
+      setFastFoodReward(true); // Premier fast food, récompense
+    }
+  }, [isFastFood, repasSemaine, date]);
+
+  // Handler pour ajouter un aliment fast food
+  const handleAddFastFoodAliment = () => {
+    setFastFoodAliments([...fastFoodAliments, { nom: '', quantite: '', kcal: '' }]);
+  };
+
+  // Handler pour modifier un aliment fast food
+  const handleChangeFastFoodAliment = (idx, field, value) => {
+    const newAliments = fastFoodAliments.map((a, i) => i === idx ? { ...a, [field]: value } : a);
+    setFastFoodAliments(newAliments);
+  };
+
+  // Calcul automatique des kcal pour fast food (référentiel)
+  useEffect(() => {
+    setFastFoodAliments(fastFoodAliments.map(a => {
+      const found = referentielAliments.find(r => r.nom.toLowerCase() === a.nom.toLowerCase());
+      if (found && a.quantite) {
+        return { ...a, kcal: (parseFloat(a.quantite) * found.kcal).toFixed(0) };
+      }
+      return a;
+    }));
+  }, [fastFoodAliments]);
   // Validation stricte des props
   extrasRestants = typeof extrasRestants === 'number' && !isNaN(extrasRestants) ? extrasRestants : 0;
   const [aliment, setAliment] = useState('');
@@ -70,6 +118,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
   const [reactBloc, setReactBloc] = useState([]);
   const [showDefi, setShowDefi] = useState(false);
   const [loadingKcal, setLoadingKcal] = useState(false);
+  // Ajout Fast food
   // Ajout pour gestion validation semaine
   const [semaineValidee, setSemaineValidee] = useState(false);
   const semaineCouranteDate = date; // à adapter si besoin (date du dimanche)
@@ -185,6 +234,91 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
       </div>
 
       <form onSubmit={handleSubmit} style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        {/* Message d’avertissement et suggestion si règle non respectée */}
+        {isFastFood && fastFoodHistory.length > 0 && (
+          (() => {
+            const lastFastFood = fastFoodHistory[fastFoodHistory.length - 1];
+            const lastDate = new Date(lastFastFood.date);
+            const currentDate = new Date(date);
+            const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+            if (diffDays < 45) {
+              return (
+                <div style={{ background: '#fff3e0', color: '#e65100', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                  <strong>Attention :</strong> Tu as consommé un fast food il y a {diffDays} jours.<br />
+                  Il est recommandé d’attendre 45 jours entre deux fast food pour préserver ton équilibre alimentaire.<br />
+                  <span style={{ fontWeight: 500 }}>Planifie ton prochain fast food pour maximiser ta récompense !</span>
+                </div>
+              );
+            }
+            return null;
+          })()
+        )}
+        {/* Récompense si délai respecté */}
+        {isFastFood && fastFoodReward && (
+          <div style={{ background: '#e8f5e9', color: '#388e3c', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+            🎉 Bravo ! Tu as respecté le délai entre deux fast food.<br />
+            Tu débloques une récompense et tu progresses vers une meilleure alimentation !
+          </div>
+        )}
+        {/* Saisie des aliments fast food si mode activé */}
+        {isFastFood && (
+          <div style={{ marginBottom: 16 }}>
+            <label>Aliments consommés (Fast food)</label>
+            {fastFoodAliments.map((a, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input
+                  type="text"
+                  placeholder="Aliment"
+                  value={a.nom}
+                  onChange={e => handleChangeFastFoodAliment(idx, 'nom', e.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Quantité"
+                  value={a.quantite}
+                  onChange={e => handleChangeFastFoodAliment(idx, 'quantite', e.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Kcal"
+                  value={a.kcal}
+                  onChange={e => handleChangeFastFoodAliment(idx, 'kcal', e.target.value)}
+                  required
+                />
+              </div>
+            ))}
+            <button type="button" onClick={handleAddFastFoodAliment} style={{ marginTop: 4 }}>Ajouter un aliment</button>
+          </div>
+        )}
+        {/* Case à cocher Fast food */}
+        <label>
+          <input type="checkbox" checked={isFastFood} onChange={e => setIsFastFood(e.target.checked)} />
+          Fast food ?
+        </label>
+        {/* Liste déroulante des restaurants si Fast food coché */}
+        {isFastFood && (
+          <div style={{ marginBottom: 12 }}>
+            <label>Choix du restaurant</label>
+            <select value={fastFoodType} onChange={e => setFastFoodType(e.target.value)} required>
+              <option value="">Sélectionner…</option>
+              {fastFoodList.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+            {/* Saisie manuelle si "Autre" */}
+            {fastFoodType === "Autre" && (
+              <input
+                type="text"
+                placeholder="Nom du restaurant"
+                value={fastFoodType}
+                onChange={e => setFastFoodType(e.target.value)}
+                style={{ marginTop: 8 }}
+              />
+            )}
+          </div>
+        )}
         <h3>{type} du {date}</h3>
         <label>Aliment mangé</label>
         <input
@@ -213,6 +347,8 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
           <option value="poisson" />
           <option value="volaille" />
           <option value="viande" />
+          <option value="autres" />
+          <option value="fromage" />
           <option value="boisson" />
           <option value="produit laitier" />
         </datalist>

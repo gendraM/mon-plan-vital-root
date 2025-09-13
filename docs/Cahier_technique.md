@@ -1,5 +1,7 @@
-Bloc Technique 1 – Écran d’accueil
-Objectif fonctionnel
+# Cahier Technique
+
+## Bloc Technique 1 – Écran d’accueil
+### Objectif fonctionnel
 Afficher une vue synthétique et motivante de la journée en cours, avec accès aux fonctions clés :
 Repas du jour planifié + bouton de saisie réelle
 
@@ -20,94 +22,48 @@ Challenge actif (si en cours)
 
 
 
-Composants UI (interface utilisateur)
+### Composants UI (interface utilisateur)
 
 
-Composant
-Description
-HeaderDate
-Affiche la date du jour automatiquement (dd/mm/yyyy)
-MealBlock (x4)
-Bloc pour chaque moment de la journée (matin, midi, soir, collation) :  - Repas planifié (en petit)  - Bouton “Ce que j’ai mangé” (ouvre formulaire de saisie)
-ExtraBar
-Jauge de quota extra de la semaine (barre ou anneau circulaire)  Texte : “2 / 3 extras utilisés cette semaine”
-MoodBox
-Si humeur non saisie aujourd’hui → 3 smileys cliquables (En forme / Bof / Fragile)
-ScoreCard
-Score actuel du jour (base 10) + barre de progression de la constance hebdomadaire
-MotivationMessage
-Message adapté selon humeur du jour (cf. table ci-dessous)
-ChallengeCard
-Si challenge actif : titre, avancement (ex : “3/7 jours”), bouton “Voir défi”
+| Composant        | Description                                                                                     |
+|------------------|-------------------------------------------------------------------------------------------------|
+| HeaderDate       | Affiche la date du jour automatiquement (dd/mm/yyyy)                                          |
+| MealBlock (x4)  | Bloc pour chaque moment de la journée (matin, midi, soir, collation) :  - Repas planifié (en petit)  - Bouton “Ce que j’ai mangé” (ouvre formulaire de saisie) |
+| ExtraBar         | Jauge de quota extra de la semaine (barre ou anneau circulaire)  Texte : “2 / 3 extras utilisés cette semaine” |
+| MoodBox          | Si humeur non saisie aujourd’hui → 3 smileys cliquables (En forme / Bof / Fragile)            |
+| ScoreCard        | Score actuel du jour (base 10) + barre de progression de la constance hebdomadaire            |
+| MotivationMessage| Message adapté selon humeur du jour (cf. table ci-dessous)                                     |
+| ChallengeCard    | Si challenge actif : titre, avancement (ex : “3/7 jours”), bouton “Voir défi”                  |
 
-Variables utilisées
+### Variables utilisées
 
-Variable
-Type
-Rôle
-today_date
-Date
-Détectée automatiquement via l’horloge locale
-meals_planified[today_date]
-Object
-Repas prévus pour le jour J
-meals_logged[today_date]
-Object
-Repas réellement saisis
-extras_logged_week
-Int
-Nombre d’extras pris cette semaine
-extras_quota_week
-Int
-Par défaut : 3
-user_mood[today_date]
-String
-En forme / Bof / Fragile
-score_today
-Int
-Calcul automatique basé sur : repas saisis + extra dans le quota
-challenge_active
-Bool
-True si un challenge est en cours
-challenge_progress
-Object
-Suivi de l’avancement si applicable
+| Variable                | Type   | Rôle                                                                 |
+|-------------------------|--------|----------------------------------------------------------------------|
+| today_date              | Date   | Détectée automatiquement via l’horloge locale                        |
+| meals_planified[today_date] | Object | Repas prévus pour le jour J                                         |
+| meals_logged[today_date]   | Object | Repas réellement saisis                                             |
+| extras_logged_week      | Int    | Nombre d’extras pris cette semaine                                  |
+| extras_quota_week      | Int    | Par défaut : 3                                                      |
+| user_mood[today_date]  | String | En forme / Bof / Fragile                                           |
+| score_today             | Int    | Calcul automatique basé sur : repas saisis + extra dans le quota   |
+| challenge_active        | Bool   | True si un challenge est en cours                                   |
+| challenge_progress      | Object | Suivi de l’avancement si applicable                                 |
 
+### Logique métier intégrée
+- La date est détectée automatiquement (today = new Date()).
+- L’écran charge les repas prévus et ceux déjà saisis pour today.
+- Si aucun repas saisi → bouton clignotant “Ajouter ce que j’ai mangé”
+- La jauge d’extra est recalculée chaque fois qu’un extra est ajouté.
+- Le MotivationMessage est choisi selon le mood du jour :
+  - En forme → “Tu rayonnes aujourd’hui. Et si on battait un record ?”
+  - Bof → “Pas besoin d’être parfaite. Juste présente aujourd’hui.”
+  - Fragile → “Ralentis, respire. Tu peux toujours te réaligner.”
+- Si aucun check-in fait → MoodBox s’affiche pour choisir une humeur (1 clic).
+- Si challenge actif → ChallengeCard visible + bouton vers le suivi.
 
-
-Logique métier intégrée
-La date est détectée automatiquement (today = new Date()).
-
-
-L’écran charge les repas prévus et ceux déjà saisis pour today.
-
-
-Si aucun repas saisi → bouton clignotant “Ajouter ce que j’ai mangé”
-
-
-La jauge d’extra est recalculée chaque fois qu’un extra est ajouté.
-
-
-Le MotivationMessage est choisi selon le mood du jour :
-
-
-En forme → “Tu rayonnes aujourd’hui. Et si on battait un record ?”
-
-
-Bof → “Pas besoin d’être parfaite. Juste présente aujourd’hui.”
-
-
-Fragile → “Ralentis, respire. Tu peux toujours te réaligner.”
-
-
-Si aucun check-in fait → MoodBox s’affiche pour choisir une humeur (1 clic).
-
-
-Si challenge actif → ChallengeCard visible + bouton vers le suivi.
-
-
-Données en base
-Collection : meals
+### Données en base
+- **Collection : meals**
+```json
 {
   "date": "2025-05-22",
   "moment": "matin",
@@ -115,7 +71,9 @@ Collection : meals
   "réel": "Porridge + 2 biscuits",
   "différence": "Biscuits non prévus"
 }
-Collection : extras
+```
+- **Collection : extras**
+```json
 {
   "date": "2025-05-22",
   "type": "bonbons",
@@ -123,424 +81,466 @@ Collection : extras
   "quantité": "20g",
   "kcal": 100
 }
-Collection : mood
-
+```
+- **Collection : mood**
+```json
 {
   "date": "2025-05-22",
   "humeur": "bof"
 }
+```
 
-Cas particuliers à gérer
+### Cas particuliers à gérer
 
-Situation
-Comportement
-Aucun repas saisi dans la journée
-Bandeau : “Tu veux commencer par noter ton petit-déjeuner ?”
-Aucun check-in humeur
-Bloc MoodBox reste affiché jusqu’à choix
-Quota d’extras dépassé
-ExtraBar en rouge clignotant + message : “Tu peux compenser demain”
-Aucun challenge en cours
-Bloc ChallengeCard masqué (mais bouton “Découvrir un défi” reste visible)
+| Situation                        | Comportement                                                                 |
+|----------------------------------|------------------------------------------------------------------------------|
+| Aucun repas saisi dans la journée | Bandeau : “Tu veux commencer par noter ton petit-déjeuner ?”                |
+| Aucun check-in humeur            | Bloc MoodBox reste affiché jusqu’à choix                                    |
+| Quota d’extras dépassé          | ExtraBar en rouge clignotant + message : “Tu peux compenser demain”        |
+| Aucun challenge en cours         | Bloc ChallengeCard masqué (mais bouton “Découvrir un défi” reste visible)   |
 
+### Navigation et intégration
+- C’est la page par défaut de l’application (écran d’accueil).
+- Chaque bloc (repas, extra, humeur, etc.) renvoie vers sa page de détail si besoin :
+  - “Ce que j’ai mangé” → page saisie repas
+  - “Voir mes extras” → page quota extras
+  - “Voir défi” → page Challenge
+  - “Changer humeur” → ouvre MoodBox
 
-Navigation et intégration
-C’est la page par défaut de l’application (écran d’accueil).
+---
 
-
-Chaque bloc (repas, extra, humeur, etc.) renvoie vers sa page de détail si besoin :
-
-
-“Ce que j’ai mangé” → page saisie repas
-
-
-“Voir mes extras” → page quota extras
-
-
-“Voir défi” → page Challenge
-
-
-“Changer humeur” → ouvre MoodBox
-
-Bloc 2 – Suivi alimentaire
+## Bloc 2 – Suivi alimentaire
 Voici la checklist rigoureuse d’éléments à intégrer pour valider ce bloc :
 
 1. Fonctionnalités attendues (issus du cahier des charges)
-L’utilisateur peut renseigner les aliments consommés par repas : petit-déjeuner, déjeuner, dîner, encas.
-
-
-Il peut choisir entre deux options : suivre le plan ou entrer ce qu’il a mangé réellement.
-
-
-Si l’utilisateur suit le plan, les propositions d’aliments sont pré-remplies.
-
-
-Si l’utilisateur ne suit pas le plan, il peut saisir manuellement.
-
-
-Une base de référence calorique est utilisée (automatique ou manuelle).
-
-
-Si aucun aliment trouvé, l’utilisateur peut ajouter un aliment avec calories.
-
-
-Affichage de l’écart entre le plan prévu et ce qui a été réellement mangé.
-
-
-Intégration avec le calcul du quota calorique journalier (issu du profil utilisateur).
-
-
+- L’utilisateur peut renseigner les aliments consommés par repas : petit-déjeuner, déjeuner, dîner, encas.
+- Il peut choisir entre deux options : suivre le plan ou entrer ce qu’il a mangé réellement.
+- Si l’utilisateur suit le plan, les propositions d’aliments sont pré-remplies.
+- Si l’utilisateur ne suit pas le plan, il peut saisir manuellement.
+- Une base de référence calorique est utilisée (automatique ou manuelle).
+- Si aucun aliment trouvé, l’utilisateur peut ajouter un aliment avec calories.
+- Affichage de l’écart entre le plan prévu et ce qui a été réellement mangé.
+- Intégration avec le calcul du quota calorique journalier (issu du profil utilisateur).
 
 2. Données utilisées (issus du cahier technique)
-Poids, taille, objectif : récupérés depuis la table Supabase utilisateur.
-
-
-Plan alimentaire associé : stocké dans plan_alimentaire ou équivalent.
-
-
-Liste des aliments : stockée ou récupérée dynamiquement (fonction de recherche ou table aliments).
-
-
-Repas de la journée : possibilité d’horodatage ou de sélection (matin, midi, soir, encas).
-
-
+- Poids, taille, objectif : récupérés depuis la table Supabase utilisateur.
+- Plan alimentaire associé : stocké dans plan_alimentaire ou équivalent.
+- Liste des aliments : stockée ou récupérée dynamiquement (fonction de recherche ou table aliments).
+- Repas de la journée : possibilité d’horodatage ou de sélection (matin, midi, soir, encas).
 
 3. Comportements spécifiques
-Le champ “Pourquoi j’ai mangé ?” apparaît après validation de l’aliment (choix entre : j’avais faim / j’étais stressé(e) / habitude / plaisir / autre).
-
-
-Ce champ est facultatif mais enregistré dans la table suivi_alimentaire.
-
-
-Affichage de messages de feedback (“Tu t’es écouté(e)” / “Tu as dépassé ton besoin, sans jugement” etc.).
-
-
+- Le champ “Pourquoi j’ai mangé ?” apparaît après validation de l’aliment (choix entre : j’avais faim / j’étais stressé(e) / habitude / plaisir / autre).
+- Ce champ est facultatif mais enregistré dans la table suivi_alimentaire.
+- Affichage de messages de feedback (“Tu t’es écouté(e)” / “Tu as dépassé ton besoin, sans jugement” etc.).
 
 4. Rendu visuel attendu
-Interface simple, motivante et fluide.
-
-
-Possibilité de valider rapidement ou détail manuel.
-
-
-Feedback visuel (couleur, jauge, ou emoji) en fonction du respect du plan ou non.
-
-
+- Interface simple, motivante et fluide.
+- Possibilité de valider rapidement ou détail manuel.
+- Feedback visuel (couleur, jauge, ou emoji) en fonction du respect du plan ou non.
 
 5. Connexions inter-blocs
-Données du Bloc 1 (profil) utilisées pour le calcul de besoin calorique journalier.
+- Données du Bloc 1 (profil) utilisées pour le calcul de besoin calorique journalier.
+- Données de ce bloc doivent alimenter les statistiques de progression (Bloc 4).
+- L’historique journalier peut être affiché dans un Bloc “Historique” ou accessible depuis l’accueil.
 
+---
 
-Données de ce bloc doivent alimenter les statistiques de progression (Bloc 4).
-
-
-L’historique journalier peut être affiché dans un Bloc “Historique” ou accessible depuis l’accueil.
-
-
-
-Bloc Technique 3 – Extras
-Objectif fonctionnel
+## Bloc Technique 3 – Extras
+### Objectif fonctionnel
 Permettre à l’utilisateur de saisir, suivre et gérer ses extras alimentaires de manière souple, motivante et bienveillante, avec :
-Une alerte douce en cas de dépassement imminent
-
-
-Des suggestions d’alternatives
-
-
-Un historique consultable et modifiable
-
-
-Un calcul de l’impact pondéral sur la perte de poids théorique
-
-
+- Une alerte douce en cas de dépassement imminent
+- Des suggestions d’alternatives
+- Un historique consultable et modifiable
+- Un calcul de l’impact pondéral sur la perte de poids théorique
 
 1. Fonctionnalités principales
-Saisie rapide d’un extra : type, quantité, kcal
-
-
-Catégorisation : pâtisseries, bonbons, fast food, etc.
-
-
-Jauge ExtraBar indiquant le quota utilisé (par semaine/mois)
-
-
-Message de prévention douce si quota proche d’être dépassé
-
-
-Message informatif et non culpabilisant en cas de dépassement
-
-
-Suggestion d’alternatives (“aliment booster”)
-
-
-Valorisation si extra évité (gain affiché)
-
-
-Calcul et affichage de l’impact pondéral (kcal converties en poids non perdu)
-
-
-Historique des extras avec option de modification ou suppression
-
-
+- Saisie rapide d’un extra : type, quantité, kcal
+- Catégorisation : pâtisseries, bonbons, fast food, etc.
+- Jauge ExtraBar indiquant le quota utilisé (par semaine/mois)
+- Message de prévention douce si quota proche d’être dépassé
+- Message informatif et non culpabilisant en cas de dépassement
+- Suggestion d’alternatives (“aliment booster”)
+- Valorisation si extra évité (gain affiché)
+- Calcul et affichage de l’impact pondéral (kcal converties en poids non perdu)
+- Historique des extras avec option de modification ou suppression
 
 2. Données utilisées
-date (date de l’extra)
-
-
-type (ex: “bonbons”, “pâtisserie”)
-
-
-quantité (ex: “30g”)
-
-
-kcal (saisie ou calculée)
-
-
-règle_respectée (true/false)
-
-
-extras_logged_week (compteur hebdomadaire)
-
-
-extras_quota_week (quota défini, par défaut : 3)
-
-
-extras_évités (optionnel, déclaration volontaire)
-
-
-gain_kcal_théorique (kcal économisées si extra évité)
-
-
-poids_non_perdu = kcal_total_extras / 7700
-
-
+- date (date de l’extra)
+- type (ex: “bonbons”, “pâtisserie”)
+- quantité (ex: “30g”)
+- kcal (saisie ou calculée)
+- règle_respectée (true/false)
+- extras_logged_week (compteur hebdomadaire)
+- extras_quota_week (quota défini, par défaut : 3)
+- extras_évités (optionnel, déclaration volontaire)
+- gain_kcal_théorique (kcal économisées si extra évité)
+- poids_non_perdu = kcal_total_extras / 7700
 
 3. Comportements spécifiques
-Alerte douce anticipée
-Si extras_logged_week / extras_quota_week >= 0.8 :
-
-
-Message : “Tu es proche de ton quota hebdomadaire. Et si tu choisissais un boost à la place ?”
-
-
-Affichage de suggestions alternatives via SuggestionBox
-
-
-Enregistrement d’un extra
-Une fois validé, l’extra est enregistré dans la collection extras
-
-
-Mise à jour automatique de :
-
-
-Jauge ExtraBar
-
-
-Quota consommé
-
-
-Écart pondéral (calcul calories / 7700)
-
-
-Message de feedback affiché selon le cas :
-
-
-Règle respectée → “Bravo, tu restes aligné(e)”
-
-
-Légère déviation → “Tu peux ajuster demain”
-
-
-Dépassement fort → “Sois douce avec toi-même, tu peux te réaligner”
-
-
-Historique et gestion
-Liste des extras affichée dans un tableau ou cartes
-
-
-Filtrage possible (jour/semaine/mois)
-
-
-Clic sur un extra → menu avec :
-
-
-Modifier (ouvre formulaire pré-rempli)
-
-
-Supprimer (popup de confirmation)
-
-
-Toute action met à jour le quota et le calcul pondéral
-
-
+- Alerte douce anticipée
+  - Si extras_logged_week / extras_quota_week >= 0.8 :
+    - Message : “Tu es proche de ton quota hebdomadaire. Et si tu choisissais un boost à la place ?”
+    - Affichage de suggestions alternatives via SuggestionBox
+- Enregistrement d’un extra
+  - Une fois validé, l’extra est enregistré dans la collection extras
+  - Mise à jour automatique de :
+    - Jauge ExtraBar
+    - Quota consommé
+    - Écart pondéral (calcul calories / 7700)
+  - Message de feedback affiché selon le cas :
+    - Règle respectée → “Bravo, tu restes aligné(e)”
+    - Légère déviation → “Tu peux ajuster demain”
+    - Dépassement fort → “Sois douce avec toi-même, tu peux te réaligner”
+- Historique et gestion
+  - Liste des extras affichée dans un tableau ou cartes
+  - Filtrage possible (jour/semaine/mois)
+  - Clic sur un extra → menu avec :
+    - Modifier (ouvre formulaire pré-rempli)
+    - Supprimer (popup de confirmation)
+  - Toute action met à jour le quota et le calcul pondéral
 
 4. Interface utilisateur attendue
-Composants principaux :
-ExtraForm : formulaire de saisie
-
-
-ExtraTypeSelector : boutons illustrés pour le type d’extra
-
-
-QuotaBar : jauge d’extras utilisés / autorisés
-
-
-PreAlertBox : message doux avant validation si quota proche
-
-
-SuggestionBox : affiche 2 ou 3 alternatives “aliment booster”
-
-
-FeedbackMessage : retour empathique après validation
-
-
-GainBox : gain en kcal si extra évité volontairement
-
-
-ExtraItemCard : carte de chaque extra saisi (historique)
-
-
-EditExtraModal : pour modifier un extra existant
-
-
-ConfirmDeletePopup : confirmation avant suppression
-
-
-ImpactBox : message pondéral du type “Tu ralentis ta perte de 0,3 kg ce mois-ci”
+- Composants principaux :
+  - ExtraForm : formulaire de saisie
+  - ExtraTypeSelector : boutons illustrés pour le type d’extra
+  - QuotaBar : jauge d’extras utilisés / autorisés
+  - PreAlertBox : message doux avant validation si quota proche
+  - SuggestionBox : affiche 2 ou 3 alternatives “aliment booster”
+  - FeedbackMessage : retour empathique après validation
+  - GainBox : gain en kcal si extra évité volontairement
+  - ExtraItemCard : carte de chaque extra saisi (historique)
+  - EditExtraModal : pour modifier un extra existant
+  - ConfirmDeletePopup : confirmation avant suppression
+  - ImpactBox : message pondéral du type “Tu ralentis ta perte de 0,3 kg ce mois-ci”
 5. Logique métier intégrée
-Tous les extras sont enregistrés dans collection: extras
-
-
-À chaque saisie, les calories sont cumulées → calcul poids_non_perdu
-
-
-Si un extra est évité volontairement :
-
-
-Gain kcal estimé
-
-
-Message positif affiché
-
-
-Possibilité de suppression ou modification à tout moment
-
-
-Historique affiché en liste
-
-
-Jauge et poids projeté recalculés dynamiquement
-
-
+- Tous les extras sont enregistrés dans collection: extras
+- À chaque saisie, les calories sont cumulées → calcul poids_non_perdu
+- Si un extra est évité volontairement :
+  - Gain kcal estimé
+  - Message positif affiché
+- Possibilité de suppression ou modification à tout moment
+- Historique affiché en liste
+- Jauge et poids projeté recalculés dynamiquement
 
 6. Connexions inter-blocs
-Bloc 1 – Accueil :
+- Bloc 1 – Accueil :
+  - La jauge ExtraBar y est affichée
+  - Le poids théorique vs réel y est partiellement visualisé
+  - Un bouton “Voir mes extras” mène à l’historique
+- Bloc 2 – Repas :
+  - Les extras influencent la balance calorique du jour
+- Bloc 4 (futur) – Statistiques :
+  - Données d’extras agrégées pour visualisation mensuelle
+  - Intégration du poids ralenti ou du score extras
+- Bloc 6 – Récompenses :
+  - Bonus ou badges possibles pour quota respecté ou extras évités
 
+---
 
-La jauge ExtraBar y est affichée
-
-
-Le poids théorique vs réel y est partiellement visualisé
-
-
-Un bouton “Voir mes extras” mène à l’historique
-
-
-Bloc 2 – Repas :
-
-
-Les extras influencent la balance calorique du jour
-
-
-Bloc 4 (futur) – Statistiques :
-
-
-Données d’extras agrégées pour visualisation mensuelle
-
-
-Intégration du poids ralenti ou du score extras
-
-
-Bloc 6 – Récompenses :
-
-
-Bonus ou badges possibles pour quota respecté ou extras évités
-
-
-Bloc Technique 4 – Check-in émotionnel
-Objectif fonctionnel
+## Bloc Technique 4 – Check-in émotionnel
+### Objectif fonctionnel
 Permettre à l’utilisateur de déclarer ou de se voir suggérer une humeur quotidienne, afin que :
-l’interface visuelle et le ton général de l’application s’adaptent à son état émotionnel,
-
-
-des messages de soutien, des défis ou des propositions personnalisées lui soient offerts en fonction de son ressenti réel ou détecté.
-
-
+- l’interface visuelle et le ton général de l’application s’adaptent à son état émotionnel,
+- des messages de soutien, des défis ou des propositions personnalisées lui soient offerts en fonction de son ressenti réel ou détecté.
 
 1. Points d’accès à la fonctionnalité
 
-Élément
-Justification
-Bouton “Comment tu te sens ?” sur l’accueil
-Présent dans le cahier des charges (section 3.1 et 3.4)
-Accès possible depuis chaque repas (petit-déj, déjeuner…)
-Indiqué dans le cahier des charges (section 3.4)
-Bloc “MoodBox” affiché si aucune humeur choisie dans la journée
-Confirmé dans section 3.1
+| Élément                                | Justification                                                      |
+|----------------------------------------|-------------------------------------------------------------------|
+| Bouton “Comment tu te sens ?” sur l’accueil | Présent dans le cahier des charges (section 3.1 et 3.4)         |
+| Accès possible depuis chaque repas (petit-déj, déjeuner…) | Indiqué dans le cahier des charges (section 3.4)                |
+| Bloc “MoodBox” affiché si aucune humeur choisie dans la journée | Confirmé dans section 3.1                                        |
 
 2. Humeurs disponibles
-En forme
-
-
-Bof
-
-
-Fragile / Tentée
-
-
-Neutre (si aucun choix effectué)
-
+- En forme
+- Bof
+- Fragile / Tentée
+- Neutre (si aucun choix effectué)
 
 Justification : explicitement listé dans le cahier des charges (section 3.4)
 
 3. Mode de saisie et suggestion intelligente
 
-Mode
-Fonctionnement
-Justification
-Saisie manuelle (via <select> ou boutons smileys)
-L’utilisateur choisit librement son humeur du jour
-Déjà prévu dans la V1
-Suggestion automatique douce
-Si la régularité baisse, les extras augmentent, ou le poids stagne → message : “Tu sembles en baisse de rythme. Envie d’activer l’ambiance douce ?”
-Validé dans nos échanges et réalisable via algorithme simple basé sur :  - fréquence des repas saisis  - répétition des choix émotionnels  - dépassement des quotas  - variation pondérale
+| Mode                        | Fonctionnement                                                                                       | Justification                                                                                     |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Saisie manuelle (via <select> ou boutons smileys) | L’utilisateur choisit librement son humeur du jour                                                  | Déjà prévu dans la V1                                                                            |
+| Suggestion automatique douce | Si la régularité baisse, les extras augmentent, ou le poids stagne → message : “Tu sembles en baisse de rythme. Envie d’activer l’ambiance douce ?” | Validé dans nos échanges et réalisable via algorithme simple basé sur :  - fréquence des repas saisis  - répétition des choix émotionnels  - dépassement des quotas  - variation pondérale |
 
 4. Conséquences visuelles et comportementales
 a) Changement de thème visuel (ambiance)
 
-Humeur
-Ambiance activée
-En forme
-Thème Feu : couleurs dynamiques, chaudes
-Bof
-Thème Eau : couleurs douces, fluides
-Fragile
-Thème Terre : ambiance rassurante, stable
-Neutre
-Thème standard
+| Humeur   | Ambiance activée                                   |
+|----------|----------------------------------------------------|
+| En forme | Thème Feu : couleurs dynamiques, chaudes         |
+| Bof      | Thème Eau : couleurs douces, fluides             |
+| Fragile  | Thème Terre : ambiance rassurante, stable        |
+| Neutre   | Thème standard                                    |
 
-Justification : mention explicite dans le cahier des charges (3.4)
-“L’app adapte ses couleurs… en conséquence”
+Justification : mention explicite dans le cahier des charges (3.4) “L’app adapte ses couleurs… en conséquence”
 
-b) 
-Adaptation des messages / ton général
+b) Adaptation des messages / ton général
 
-Humeur
-Exemple de message motivationnel
-En forme
-“Tu rayonnes aujourd’hui. Et si on battait un record ?”
-Bof
-“Pas besoin d’être parfaite. Juste présente aujourd’hui.”
+| Humeur   | Exemple de message motivationnel                                      |
+|----------|---------------------------------------------------------------------|
+| En forme | “Tu rayonnes aujourd’hui. Et si on battait un record ?”            |
+| Bof      | “Pas besoin d’être parfaite. Juste présente aujourd’hui.”          |
+| Fragile  | “Ralentis, respire. Tu peux toujours te réaligner.”                |
+
+Justification : intégralement listé dans le Bloc 1 (côté accueil) comme table de correspondance des humeurs → messages.
+
+c) Adaptation du rythme de l’app
+- Si “Fragile” : l’app réduit la fréquence des défis et des messages incitatifs
+- Si “En forme” : propose un challenge actif immédiat
+- Si “Bof” : ne propose rien sauf si l’utilisateur le demande
+- Si “Neutre” : aucun ajustement
+
+Justification : interprétation logique de “rythme adapté” mentionné dans le cahier des charges (3.4)
+
+5. Déclenchement de défis émotionnellement adaptés
+Après saisie (ou suggestion acceptée) de l’humeur, l’app propose :
+
+| Humeur   | Déclenchement automatique ? | Type de défi proposé                                      |
+|----------|-----------------------------|----------------------------------------------------------|
+| En forme | Oui (sauf refus)           | Challenge dynamique : légumes 3 jours, 0 extra 5 jours, etc. |
+| Fragile  | Oui (ton doux)             | Challenge recentrage : petit-déj stable, aliment booster, “1 jour à la fois” |
+| Bof      | Non (sauf demande)         | Option de défi simple si l’utilisateur clique            |
+| Neutre   | Non                         | Aucun challenge proposé                                  |
+
+Justification : logiquement issu de ton cahier des charges (“défi possible” si en forme) et validé explicitement dans notre échange : “quand on sent qu’on est pas bien, on va proposer un plan alimentaire, une reprise en douceur, etc.”
+
+6. Données stockées
+
+| Donnée                | Format   | Exemple                     |
+|-----------------------|----------|-----------------------------|
+| date                  | Date ISO | “2025-05-23”                |
+| user_mood             | String   | “fragile”                   |
+| suggested_by_system   | Booléen  | true / false                |
+| mood_confirmed        | Booléen  | true / false (permet de suivre les refus) |
+
+7. Composants UI attendus
+
+| Composant                  | Fonction                                                                 |
+|----------------------------|--------------------------------------------------------------------------|
+| MoodBox                    | Sélecteur des 3 humeurs (+ neutre par défaut)                          |
+| AmbianceThemeProvider      | Change les couleurs / style de l’app                                    |
+| MotivationMessage          | Message quotidien adapté à l’humeur                                     |
+| ChallengeSuggestionCard    | Propose un défi adapté post-sélection                                   |
+| MoodSuggestionPrompt       | S’affiche si comportement suggère une baisse ou hausse d’énergie       |
+| MoodHistoryChart (optionnel futur) | Visualisation de l’évolution émotionnelle dans le temps            |
+
+8. Connexions inter-blocs
+- Bloc 1 (Accueil) :
+  - Affiche la MoodBox si aucune humeur saisie
+  - Montre le MotivationMessage lié à l’humeur
+  - Déclenche ou masque les ChallengeCard selon humeur
+- Bloc 5 (Challenges) :
+  - Reçoit un signal depuis le Bloc 4 avec le type de défi à proposer
+  - Peut être refusé ou accepté par l’utilisateur
+- Bloc 6 (Récompenses) :
+  - Peut afficher un “badge de constance émotionnelle” selon la régularité des check-ins (futur)
+
+---
+
+## Bloc 5 – Challenges
+### Objectif fonctionnel
+Permettre à l’utilisateur d’être accompagné par des défis motivants ou réconfortants, en lien avec son état émotionnel et son engagement alimentaire du moment. Les challenges peuvent :
+- être proposés automatiquement selon l’humeur détectée ou choisie,
+- être sélectionnés manuellement dans une bibliothèque,
+- être créés librement par l’utilisateur,
+- et être suivis, validés, récompensés.
+
+1. Typologie des challenges et sources
+
+| Type de challenge                  | Stockage                          | Accès                                      |
+|------------------------------------|-----------------------------------|-------------------------------------------|
+| Défis socles (codés en dur)       | Dans le code source (fichier coreChallenges.js) | Toujours accessibles, même hors ligne    |
+| Défis adaptatifs prédéfinis       | Table challenges dans Supabase    | Proposés automatiquement ou consultables  |
+| Défis personnalisés                | Table challenges_personnalisés liée à user_id | Créés librement par l’utilisateur        |
+
+2. Déclenchement et conditions d’apparition
+a) Déclenchement automatique conditionnel
+
+| Humeur du jour | Déclenchement | Type de défi proposé                                      |
+|----------------|---------------|----------------------------------------------------------|
+| En forme       | Oui (automatique sauf refus) | Challenge dynamique : 3 jours légumes, 5 jours sans extra |
+| Fragile        | Oui (proposition douce)     | Challenge de recentrage : plan d’urgence, 1 jour stable |
+| Bof            | Non (sauf demande explicite) | Optionnel                                                |
+| Neutre         | Aucun défi proposé          | —                                                        |
+
+Le type de défi est choisi automatiquement en fonction de l’humeur du jour (cf. Bloc 4).
+
+b) Déclenchement manuel
+L’utilisateur peut, à tout moment :
+- Consulter la bibliothèque de défis prédéfinis (stockée dans Supabase)
+- Créer un défi personnalisé à partir d’un formulaire libre :
+  - nom, durée, objectif, description
+- Lancer un défi socle (ex : “plan d’urgence”) sans aucun paramétrage
+
+3. Interface utilisateur attendue
+
+| Composant                  | Fonction                                                                 |
+|----------------------------|--------------------------------------------------------------------------|
+| ChallengeSuggestionCard    | Carte affichée après saisie d’humeur, avec proposition de défi          |
+| ChallengeLibraryView       | Liste des défis prédéfinis (filtrables par type ou humeur)              |
+| CreateChallengeForm       | Formulaire de création de défi personnalisé                             |
+| MyChallengesDashboard      | Liste des défis en cours / terminés                                     |
+| ChallengeProgressTracker   | Suivi visuel de l’avancement : “Jour 2 / 5”                            |
+| ChallengeCardOnHome       | Bloc affiché sur l’accueil si un défi est actif                        |
+
+4. Suivi et avancement
+
+| Élément suivi              | Stockage                          | Exemple                     |
+|----------------------------|-----------------------------------|-----------------------------|
+| challenge_id               | Identifiant du défi actif         | “legumes_3j”                |
+| start_date / current_day   | Pour afficher “Jour 2 / 5”        | Date ISO / entier           |
+| status                      | “en_cours”, “terminé”, “refusé”  | Enumération                 |
+| validated_by_user          | Validation manuelle               | true / false                |
+
+Le suivi est visible :
+- dans l’interface dédiée (“Mes défis”)
+- et sur la page d’accueil via ChallengeCard
+
+5. Récompenses et feedback
+À la fin d’un défi :
+- Un badge est débloqué (cf. Bloc 6)
+- Un message personnalisé est affiché (“Tu t’es prouvé quelque chose” / “Bravo pour ta constance”)
+- Le score de constance peut être augmenté (cf. Bloc 6)
+- Feedback contextuel selon le type de défi et l’humeur initiale
+
+6. Cas particuliers à gérer
+
+| Situation                        | Comportement attendu                                                      |
+|----------------------------------|--------------------------------------------------------------------------|
+| L’utilisateur refuse un défi automatique | Aucun impact négatif. Message : “Tu peux toujours y revenir plus tard.” |
+| Aucun défi accepté mais humeur = “en forme” | Suggestion renouvelée le lendemain                                      |
+| Défi en cours mais non suivi    | Message de relance douce après 2 jours sans action                      |
+| Défi abandonné volontairement   | Message d’auto-bienveillance : “Tu as le droit de faire pause. Tu peux recommencer plus tard.” |
+
+Composant UI
+Fonction
+ChallengeSuggestionCard
+Carte affichée après sélection ou détection d’humeur pour proposer un défi
+ChallengeCardOnHome
+Bloc synthétique sur la page d’accueil : nom du défi actif + progression + bouton “Voir défi”
+MyChallengesDashboard
+Vue liste des défis en cours, terminés, refusés
+CreateChallengeForm
+Interface de création d’un défi personnalisé
+ChallengeLibraryView
+Liste des défis prédéfinis avec filtres par humeur, durée, type
+ChallengeProgressTracker
+Affichage visuel du jour courant dans le défi (“Jour 2 / 5”)
+FeedbackMessageAfterChallenge
+Message de clôture du défi (renforcement ou recentrage)
+
+7. Données à stocker (Supabase)
+- Table challenges :
+  - id
+  - nom
+  - description
+  - durée
+  - humeur_cible
+  - déclenchement_auto (bool)
+  - type (récupération / dynamique)
+- Table user_challenges :
+  - user_id
+  - challenge_id
+  - date_début
+  - statut
+  - progression
+  - humeur_initiale
+  - score_obtenu
+- Table challenges_personnalisés :
+  - user_id
+  - titre
+  - durée
+  - description
+
+8. Connexions inter-blocs
+- Bloc 4 – Check-in émotionnel :
+  - Déclenche les suggestions automatiques en fonction de l’humeur
+- Bloc 1 – Accueil :
+  - Affiche le défi en cours et sa progression
+- Bloc 6 – Récompenses :
+  - Débloque badge et score à la réussite
+
+---
+
+## Bloc Technique 6 – Récompenses
+### Objectif fonctionnel
+Valoriser les efforts quotidiens de l’utilisateur à travers un système bienveillant de récompenses basé sur :
+- la régularité des actions (repas saisis, extras respectés…),
+- les défis réalisés,
+- l’engagement émotionnel exprimé,
+ tout en maintenant un ton 100 % positif, non culpabilisant, et motivant.
+
+1. Composants du système de récompense
+
+| Élément                | Fonction                                                                 |
+|------------------------|--------------------------------------------------------------------------|
+| Score quotidien         | Évalue la qualité de la journée sur 10 : prise des repas, quota d’extras, alignement alimentaire |
+| Score de constance     | Moyenne des scores quotidiens sur les 7 derniers jours                  |
+| Badges                  | Récompenses visuelles déclenchées selon des paliers ou la réussite d’un défi |
+| Messages boostants     | Messages motivationnels personnalisés, adaptés au profil émotionnel du jour |
+| Confettis visuels      | Animation graphique déclenchée automatiquement lors d’un succès majeur   |
+| Ton positif obligatoire | Aucun message de reproche ni sanction : uniquement encouragement ou recentrage doux |
+
+2. Critères de calcul
+- **Score journalier (/10)**
+
+| Composant                | Pondération indicative |
+|---------------------------|-----------------------|
+| Repas saisis (4/4)       | +4 points             |
+| Quota d’extras respecté  | +2 points             |
+| Alignement avec le plan (réponse “j’avais faim”) | +2 points |
+| Défi en cours respecté (si actif) | +2 points       |
+| **Total maximum**        | **10 points**         |
+
+- **Score de constance**
+  - Calculé sur 7 jours glissants
+  - Affichage d’une barre de progression ou d’un pourcentage
+
+3. Déclenchement des badges
+
+| Badge                  | Condition                                      |
+|------------------------|------------------------------------------------|
+| “Constante 3 jours”   | 3 jours consécutifs avec score > 7            |
+| “Zéro extra”          | 5 jours sans aucun extra                      |
+| “Défi validé”         | Fin d’un défi (cf. Bloc 5)                    |
+| “Retour gagnant”      | Score > 8 après une journée à 0 ou absente    |
+| “Humeur suivie”       | 7 jours de check-in émotionnel consécutifs    |
+
+Les badges sont visuels, nommés, et archivés dans une collection personnelle.
+4. Messages boostants
+Les messages sont sélectionnés en fonction :
+- du score du jour
+- du score de constance
+- de l’humeur choisie (cf. Bloc 4)
+
+Exemples selon humeur :
+
+| Humeur   | Message                                      |
+|----------|----------------------------------------------|
+| En forme | “Tu fais danser ta rigueur, continue sur cette vibe !” |
+| Bof      | “Tu tiens debout même quand le vent souffle. C’est précieux.” |
+| Fragile  | “Ralentir n’est pas reculer. Tu avances, même à ton rythme.” |
+| Neutre   | “Ta présence, c’est déjà une victoire.”      |
+
+5. Confettis et animations visuelles
+- Déclenchés automatiquement lors de la réussite :
+  - d’un défi validé
+  - d’un badge majeur
+  - ou d’une progression exceptionnelle (ex : +4 points par rapport à la veille)
+- Visible sur l’écran d’accueil + écran “Mes réussites”
+
+6. Interface utilisateur attendue
+
+| Composant UI                  | Fonction                                                                 |
+|-------------------------------|--------------------------------------------------------------------------|
+| ScoreCard (Accueil)          | Affiche le score journalier + barre de constance                        |
+| BadgeUnlockedModal            | Fenêtre pop-up lorsqu’un badge est débloqué                            |
+| ConfettiEffect                | Animation visuelle                                                      |
+| BoostingMessageCard          | Carte affichant le message du jour selon humeur et score                |
 Fragile
 “Ralentis, respire. Tu peux toujours te réaligner.”
 

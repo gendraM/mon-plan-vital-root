@@ -1,21 +1,8 @@
-  // Handler pour la sauvegarde d’un repas (à adapter selon la logique métier)
-  const handleSaveRepas = async (nouveauRepas) => {
-    // Ajout du repas dans la base Supabase
-    const { error } = await supabase.from('repas_reels').insert([nouveauRepas]);
-    if (!error) {
-      setSnackbar({ open: true, message: 'Repas enregistré !', type: 'success' });
-      // Recharge la liste des repas
-      const { data } = await supabase.from('repas_reels').select('*').order('date', { ascending: false });
-      if (Array.isArray(data)) setRepasSemaine(data);
-    } else {
-      setSnackbar({ open: true, message: 'Erreur lors de l’enregistrement', type: 'error' });
-    }
-  };
-// ...existing code...
-import RepasBloc from "../components/RepasBloc";
-import { supabase } from '../lib/supabaseClient';
 import React, { useState, useEffect, useRef } from 'react';
+// ...existing code...
+import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
+import RepasBloc from "../components/RepasBloc";
 
 // Utilitaire message cyclique
 function pickMessage(array, key) {
@@ -398,6 +385,17 @@ export default function Suivi() {
   // Progression pour les badges
   const progression = getProgressionMessage(weeklyHistory, currentPalier);
 
+  // ----------- MESSAGE OBJECTIF INTERMÉDIAIRE PALIER -----------
+  // S’affiche si palier > 1 et progression.nextMilestone existe
+  const objectifIntermediaire = (currentPalier > 1 && progression.nextMilestone)
+    ? {
+        weeksToNext: progression.weeksToNext,
+        streak: progression.streak,
+        milestone: progression.nextMilestone.streak,
+        message: `Encore ${progression.weeksToNext} semaine${progression.weeksToNext>1?'s':''} à ${currentPalier} extra${currentPalier>1?'s':''} ou moins pour descendre au palier suivant ! 💪\nObjectif : tenir ${progression.nextMilestone.streak} semaine${progression.nextMilestone.streak>1?'s':''} consécutive${progression.nextMilestone.streak>1?'s':''}.`,
+      }
+    : null;
+
   // ----------- HOOK POUR L'ALERTE CALORIQUE -----------
   const [showAlerteCalorique, setShowAlerteCalorique] = useState(false);
   useEffect(() => {
@@ -406,6 +404,31 @@ export default function Suivi() {
     );
   }, [objectifCalorique, caloriesDuJour]);
   // ...autres hooks et logique métier...
+
+  // ----------- LOGIQUE D'AFFICHAGE DYNAMIQUE MOTIVATION -----------
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const extrasEnCours = extrasThisWeek;
+  let messageMotivation = null;
+  let showComparatif = false;
+  let showValidation = false;
+  if (dayOfWeek >= 1 && dayOfWeek <= 3) {
+    messageMotivation = `Nouvelle semaine, nouveaux objectifs ! Palier actuel : ${currentPalier} extras/semaine.`;
+    showComparatif = false;
+  }
+  if (dayOfWeek >= 4 && dayOfWeek <= 6) {
+    if (extrasEnCours <= currentPalier) {
+      messageMotivation = `Bravo, garde le cap, tu es sur la bonne voie ! (${extrasEnCours}/${currentPalier} extras)`;
+    } else {
+      messageMotivation = `Ce n’est pas trop tard, tu peux encore limiter les extras, rien n’est perdu ! (${extrasEnCours}/${currentPalier} extras)`;
+    }
+    showComparatif = false;
+  }
+  if (dayOfWeek === 0) {
+    showComparatif = true;
+    showValidation = true;
+    messageMotivation = null;
+  }
 
   // ----------- HANDLER DE RAFRAÎCHISSEMENT -----------
   const handleRefresh = () => {
@@ -481,6 +504,7 @@ export default function Suivi() {
         </div>
       </div>
 
+
       {/* --------- ZONE 1 : Feedback immédiat --------- */}
       <ZoneFeedbackHebdo
         extrasThisWeek={extrasThisWeek}
@@ -490,6 +514,30 @@ export default function Suivi() {
         onInfoClick={() => setShowInfo(true)}
         variation={variation}
       />
+
+      {/* --------- Message objectif intermédiaire palier --------- */}
+      {objectifIntermediaire && (
+        <div style={{
+          background: '#e8f5e9',
+          border: '2px solid #43a047',
+          borderRadius: 14,
+          padding: '16px 22px',
+          margin: '18px 0',
+          boxShadow: '0 2px 8px #43a04733',
+          textAlign: 'center',
+          fontWeight: 700,
+          fontSize: 18,
+          color: '#43a047',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          animation: 'fadeIn 0.7s',
+        }}>
+          <span style={{fontSize:32}}>➡️</span>
+          <span>{objectifIntermediaire.message}</span>
+        </div>
+      )}
 
       {/* --------- Mini-badge et message de baisse de palier --------- */}
       {typeof weeklyHistory[0]?.count === 'number' && typeof weeklyHistory[1]?.count === 'number' && currentPalier < weeklyHistory[1].count && (
@@ -514,8 +562,25 @@ export default function Suivi() {
         </div>
       )}
 
-      {/* --------- Comparaison hebdomadaire --------- */}
-      {Array.isArray(weeklyHistory) && weeklyHistory.length > 0 && (
+      {/* --------- Bloc motivation dynamique --------- */}
+      {messageMotivation && (
+        <div style={{
+          background: '#e3f2fd',
+          borderRadius: 10,
+          padding: '14px 18px',
+          margin: '12px 0 18px',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          fontSize: 17,
+          color: '#1976d2',
+          fontWeight: 600,
+          textAlign: 'center',
+        }}>
+          {messageMotivation}
+        </div>
+      )}
+
+      {/* --------- Comparaison hebdomadaire (uniquement le dernier jour) --------- */}
+      {showComparatif && Array.isArray(weeklyHistory) && weeklyHistory.length > 0 && (
         <div style={{
           background: '#e3f2fd',
           borderRadius: 10,
@@ -527,7 +592,6 @@ export default function Suivi() {
           fontWeight: 500
         }}>
           {(() => {
-            // Utilitaire pour formater les dates au format français
             function formatDateFr(dateStr) {
               const d = new Date(dateStr);
               return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
@@ -541,7 +605,7 @@ export default function Suivi() {
             return (
               <>
                 <div>
-                  <b>Semaine actuelle :</b> {weeklyHistory[0] ? `${getWeekRange(weeklyHistory[0].weekStart)} — ${weeklyHistory[0].count} extra${weeklyHistory[0].count>1?'s':''}` : '—'}
+                  <b>Semaine écoulée :</b> {weeklyHistory[0] ? `${getWeekRange(weeklyHistory[0].weekStart)} — ${weeklyHistory[0].count} extra${weeklyHistory[0].count>1?'s':''}` : '—'}
                 </div>
                 <div>
                   <b>Semaine précédente :</b> {weeklyHistory[1] ? `${getWeekRange(weeklyHistory[1].weekStart)} — ${weeklyHistory[1].count} extra${weeklyHistory[1].count>1?'s':''}` : '—'}

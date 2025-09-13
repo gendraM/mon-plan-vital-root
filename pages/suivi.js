@@ -329,7 +329,7 @@ export default function Suivi() {
     try {
       // Enregistrement du repas dans Supabase
       const { data, error } = await supabase
-        .from("repas")
+        .from("repas_reels")
         .insert([repasData]);
       if (error) {
         setSnackbar({ open: true, message: "Erreur Supabase : " + error.message, type: "error" });

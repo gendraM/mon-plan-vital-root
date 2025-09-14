@@ -1,8 +1,9 @@
 {
-  "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/_app": "pages/_app.js",
+  "/suivi-poids": "pages/suivi-poids.js",
+  "/historique-notes-repas": "pages/historique-notes-repas.js",
   "/suivi": "pages/suivi.js",
-  "/tableau-de-bord": "pages/tableau-de-bord.js",
-  "/historique-notes-repas": "pages/historique-notes-repas.js"
+  "/tableau-de-bord": "pages/tableau-de-bord.js"
 }

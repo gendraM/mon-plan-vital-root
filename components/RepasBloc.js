@@ -44,6 +44,7 @@ const etatsAlimentaires = [
   { label: "Ballonné", value: "ballonné", icon: "🤢", color: "#ef9a9a" },
   { label: "Je regrette", value: "je regrette", icon: "😔", color: "#b0bec5" },
   { label: "Je culpabilise", value: "je culpabilise", icon: "😟", color: "#b39ddb" },
+  { label: "Neutre", value: "neutre", icon: "😐", color: "#bdbdbd" },
   { label: "J’assume", value: "j’assume", icon: "💪", color: "#80cbc4" }
 ]
 

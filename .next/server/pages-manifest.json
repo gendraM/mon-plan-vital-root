@@ -4,5 +4,5 @@
   "/_document": "pages/_document.js",
   "/profil": "pages/profil.js",
   "/suivi-poids": "pages/suivi-poids.js",
-  "/suivi": "pages/suivi.js"
+  "/tableau-de-bord": "pages/tableau-de-bord.js"
 }

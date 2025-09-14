@@ -13,18 +13,36 @@ function RepasForm({ initial, onCancel, onSave }) {
       kcal: "",
     }
   );
+  const [isFastFood, setIsFastFood] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     onSave(form);
+    // Si fast food coché, enregistrer dans fast_food_history
+    if (isFastFood) {
+      const { supabase } = await import('../lib/supabaseClient');
+      const { data: userData } = await supabase.auth.getUser();
+      const user_id = userData?.user?.id || null;
+      const { error } = await supabase.from('fast_food_history').insert([
+        {
+          user_id,
+          date: form.date,
+          restaurant: 'Manuel (édition)',
+            aliments: [{ nom: form.aliment, quantite: form.quantite }]
+        }
+      ]);
+      if (error) {
+        alert('Erreur lors de l’enregistrement du fast food : ' + error.message);
+      }
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 24, background: "#f9f9f9", padding: 16, borderRadius: 10 }}>
+  <form onSubmit={handleSubmit} style={{ marginBottom: 24, background: "#f9f9f9", padding: 16, borderRadius: 10 }}>
       <h2>{initial?.id ? "Modifier le repas" : "Ajouter un repas"}</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
         <input
@@ -78,6 +96,9 @@ function RepasForm({ initial, onCancel, onSave }) {
         />
       </div>
       <div style={{ marginTop: 16 }}>
+        <label style={{ marginRight: 16 }}>
+          <input type="checkbox" checked={isFastFood} onChange={e => setIsFastFood(e.target.checked)} /> Fast food ?
+        </label>
         <button type="submit" style={{ marginRight: 8, background: "#4caf50", color: "#fff", border: "none", borderRadius: 6, padding: "6px 16px", cursor: "pointer" }}>
           {initial?.id ? "Enregistrer" : "Ajouter"}
         </button>
@@ -91,6 +112,7 @@ function RepasForm({ initial, onCancel, onSave }) {
 
 export default function Repas() {
   const [repas, setRepas] = useState([]);
+  const [fastFoodRepas, setFastFoodRepas] = useState([]);
   const [repasDebug, setRepasDebug] = useState([]);
   // Initialisation des variables pour le calcul calorique
   const [objectifCalorique, setObjectifCalorique] = useState(null);
@@ -148,7 +170,8 @@ export default function Repas() {
   const [editRepas, setEditRepas] = useState(null); // Pour le repas en cours d'édition
 
   useEffect(() => {
-    fetchRepas();
+  fetchRepas();
+  fetchFastFoodRepas();
   }, []);
 
   const fetchRepas = async () => {
@@ -160,6 +183,13 @@ export default function Repas() {
       .order("id", { ascending: false });
     if (!error) setRepas(data || []);
     setLoading(false);
+  };
+
+  const fetchFastFoodRepas = async () => {
+    const { data, error } = await supabase
+      .from('fast_food_history')
+      .select('*');
+    if (!error) setFastFoodRepas(data || []);
   };
 
   const handleDelete = async (id) => {
@@ -188,12 +218,9 @@ export default function Repas() {
         })
         .eq("id", editRepas.id);
     }
-    // Si besoin d'ajouter un repas, décommente ici :
-    // else {
-    //   await supabase.from("repas_reels").insert([form]);
-    // }
     setEditRepas(null);
-    fetchRepas();
+    await fetchRepas();
+    await fetchFastFoodRepas();
   };
 
   return (
@@ -338,6 +365,17 @@ export default function Repas() {
                 </td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.type}</td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.aliment}</td>
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>
+                  {r.aliment}
+                  {fastFoodRepas.some(ff =>
+                    ff.date === r.date &&
+                    ff.aliments?.some(a =>
+                      a.nom?.trim().toLowerCase() === r.aliment?.trim().toLowerCase()
+                    )
+                  ) && (
+                    <span style={{ marginLeft: 6, fontSize: '1.3em' }} title="Fast food">🍔</span>
+                  )}
+                </td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.categorie}</td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.quantite}</td>
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.kcal}</td>

@@ -51,9 +51,16 @@ function getMotivationMessage({ progression, extras, humeurCounts, tauxSatiete }
 }
 
 export default function TableauDeBord() {
+  // Ajout pour la validation des semaines (fast food et extras)
+  const [semainesValidees, setSemainesValidees] = useState([]);
   // Ajout : données d’évolution extras et poids
   const [evolutionExtras, setEvolutionExtras] = useState([]);
   const [evolutionPoids, setEvolutionPoids] = useState([]);
+  // Ajout fast food
+  const [fastFoodHistory, setFastFoodHistory] = useState([]);
+  const [fastFoodCount, setFastFoodCount] = useState(0);
+  const [nextFastFoodDate, setNextFastFoodDate] = useState(null);
+  const [fastFoodDelay, setFastFoodDelay] = useState(0);
   // Ajout : gestion de la période sélectionnée
   const [periode, setPeriode] = useState('semaine'); // 'semaine', 'mois', 'annee'
   const [periodeLabel, setPeriodeLabel] = useState('');
@@ -81,6 +88,13 @@ export default function TableauDeBord() {
   }
 
   useEffect(() => {
+    // Récupérer la liste des semaines validées
+    (async () => {
+      const { data: semaines } = await supabase
+        .from('semaines_validees')
+        .select('*');
+      setSemainesValidees(semaines || []);
+    })();
     const { debut, fin } = getPeriodeDates();
     let label = '';
     if (periode === 'semaine') {
@@ -95,6 +109,27 @@ export default function TableauDeBord() {
   // Fonction de refresh manuel
   const handleRefresh = async () => {
   const { debut, fin } = getPeriodeDates();
+    // Rafraîchir l’historique fast food à chaque refresh manuel
+    const { data: ffData } = await supabase
+      .from('fast_food_history')
+      .select('*')
+      .gte('date', debut.toISOString().slice(0,10))
+      .lte('date', fin.toISOString().slice(0,10))
+      .order('date', { ascending: false });
+    setFastFoodHistory(ffData || []);
+    setFastFoodCount(ffData?.length || 0);
+    if (ffData && ffData.length > 0) {
+      const lastDate = new Date(ffData[0].date);
+      const nextDate = new Date(lastDate);
+      nextDate.setDate(lastDate.getDate() + 45);
+      setNextFastFoodDate(nextDate);
+      const today = new Date();
+      const delay = Math.max(0, Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24)));
+      setFastFoodDelay(delay);
+    } else {
+      setNextFastFoodDate(null);
+      setFastFoodDelay(0);
+    }
     // Récupération locale des bornes de période
     // --- Calcul évolution extras ---
     let evoExtras = [];
@@ -274,9 +309,7 @@ export default function TableauDeBord() {
             weekStart.setDate(monday.getDate() - (i*7));
             weekStart.setHours(0,0,0,0);
             let weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-            // Récupérer la validation depuis la table semaines_validees
-            // On suppose que la liste des semaines validées est accessible (à adapter si besoin)
-            // Pour robustesse, on filtre sur la date exacte
+            // Récupérer la validation depuis l’état local semainesValidees
             let semaineValidee = semainesValidees?.find(sv => sv.weekStart === weekStart.toISOString().slice(0,10) && sv.validee === true);
             let count = repas.filter(r => {
               let d = new Date(r.date);
@@ -292,7 +325,7 @@ export default function TableauDeBord() {
           }
           return weeks;
         }
-        setWeeklyHistory(getWeeklyExtrasHistory(repasReels, 16));
+  setWeeklyHistory(getWeeklyExtrasHistory(repasReels, 16));
       }
     }, [repasReels]);
 
@@ -435,10 +468,21 @@ export default function TableauDeBord() {
         </div>
         {/* Carte extras */}
         <div style={{background:'#fff', borderRadius:14, boxShadow:'0 2px 8px #e0e0e0', padding:'1.2rem 2rem', minWidth:170, textAlign:'center'}}>
-          <div style={{fontSize:'2.1rem', fontWeight:700, color:(extrasData && typeof extrasData.current === 'number' && typeof extrasData.quota === 'number' && extrasData.current <= extrasData.quota) ? '#43a047' : '#e53935'}}>
-            ✨ {extrasData && typeof extrasData.current === 'number' ? extrasData.current : 0}
+          <div style={{fontSize:'2.1rem', fontWeight:700, color:'#e65100'}}>
+            🍔 {fastFoodCount}
           </div>
-          <div style={{color:'#888', fontWeight:600, fontSize:'1.08rem'}}>Extras</div>
+          <div style={{color:'#888', fontWeight:600, fontSize:'1.08rem'}}>Fast food sur la période</div>
+          {nextFastFoodDate && (
+            <div style={{marginTop:8, fontSize:'0.98rem', color:'#1976d2'}}>
+              Prochain créneau disponible : <b>{nextFastFoodDate.toLocaleDateString('fr-FR')}</b><br/>
+              Délai restant : <b>{fastFoodDelay} jour{fastFoodDelay>1?'s':''}</b>
+            </div>
+          )}
+          {!nextFastFoodDate && (
+            <div style={{marginTop:8, fontSize:'0.98rem', color:'#43a047'}}>
+              Aucun fast food consommé sur la période.<br/>Tu es libre d’en planifier un !
+            </div>
+          )}
         </div>
         {/* Carte satiété */}
         <div style={{background:'#fff', borderRadius:14, boxShadow:'0 2px 8px #e0e0e0', padding:'1.2rem 2rem', minWidth:170, textAlign:'center'}}>

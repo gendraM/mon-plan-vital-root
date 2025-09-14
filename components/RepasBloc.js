@@ -180,22 +180,46 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
   }, [estExtra, satiete, categorie, planCategorie, routineCount, extrasRestants])
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    // Enregistrement du repas classique
     onSave && onSave({
       type, date, aliment, categorie, quantite, kcal,
       est_extra: estExtra,
       satiete, pourquoi, ressenti,
       details_signaux: detailsSignaux
-    })
-    setAliment('')
-    setCategorie('')
-    setQuantite('')
-    setKcal('')
-    setEstExtra(false)
-    setSatiete('')
-    setPourquoi('')
-    setRessenti('')
-    setDetailsSignaux([])
+    });
+    // Enregistrement du fast food dans Supabase si sélectionné
+    if (isFastFood) {
+      import('../lib/supabaseClient').then(({ supabase }) => {
+        supabase.auth.getUser().then(({ data: userData }) => {
+          const user_id = userData?.user?.id || null;
+          supabase.from('fast_food_history').insert([
+            {
+              user_id,
+              date,
+              restaurant: fastFoodType,
+              aliments: fastFoodAliments,
+              kcal: fastFoodAliments.reduce((sum, a) => sum + (parseInt(a.kcal) || 0), 0),
+              badge: fastFoodReward ? 'ok' : null
+            }
+          ]).then(({ error }) => {
+            if (error) {
+              alert('Erreur Supabase (fast food): ' + error.message);
+            }
+          });
+        });
+      });
+    }
+    // Reset des hooks pour garder la fonctionnalité existante
+    setAliment('');
+    setCategorie('');
+    setQuantite('');
+    setKcal('');
+    setEstExtra(false);
+    setSatiete('');
+    setPourquoi('');
+    setRessenti('');
+    setDetailsSignaux([]);
     // setSuggestions([])
   }
 

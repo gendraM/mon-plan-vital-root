@@ -20,15 +20,15 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/suivi": [
+    "/profil": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/suivi.js"
+      "static/chunks/pages/profil.js"
     ],
-    "/suivi-poids": [
+    "/tableau-de-bord": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/suivi-poids.js"
+      "static/chunks/pages/tableau-de-bord.js"
     ]
   },
   "ampFirstPages": []

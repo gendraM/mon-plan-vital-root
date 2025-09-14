@@ -3,6 +3,7 @@ import { getFastFoodRewards } from "../lib/fastFoodRewards";
 import { supabase } from "../lib/supabaseClient";
 import { Line, Pie, Doughnut } from "react-chartjs-2";
 import TimelineProgression from "../components/TimelineProgression";
+import BadgeCard from "../components/BadgeCard";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -53,6 +54,8 @@ function getMotivationMessage({ progression, extras, humeurCounts, tauxSatiete }
 
 export default function TableauDeBord() {
   // Hook pour afficher/masquer l’historique des notes repas (diagnostic)
+  // Pagination des badges
+  const [showAllBadges, setShowAllBadges] = useState(false);
   const [showNotesHistory, setShowNotesHistory] = useState(false);
   // Ajout pour la validation des semaines (fast food et extras)
   const [semainesValidees, setSemainesValidees] = useState([]);
@@ -742,37 +745,45 @@ export default function TableauDeBord() {
           }}
         >
           <h2 style={{ marginTop: 0, color: COLORS[3] }}>Mes Succès & Badges</h2>
-            {badges.length === 0 && badgesFastFood.length === 0 ? (
-              <p style={{ color: "#666" }}>Aucun badge débloqué pour le moment.</p>
-            ) : (
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                  margin: 0,
-                  fontSize: "1.12rem",
-                  color: "#444",
-                  fontWeight: 600,
-                }}
-              >
-                {badges.map((badge, i) => (
-                  <li key={i} style={{ marginBottom: "0.5rem" }}>
-                    🏅 <span>{badge.nom}</span>
-                    <span style={{ color: "#888", fontSize: "0.95rem", marginLeft: 4 }}>
-                      {badge.description || ""}
-                    </span>
-                  </li>
-                ))}
-                {badgesFastFood && badgesFastFood.map((badge, i) => (
-                  <li key={"ff-"+i} style={{ marginBottom: "0.5rem" }}>
-                    🍔 <span>{badge.nom}</span>
-                    <span style={{ color: "#e65100", fontSize: "0.95rem", marginLeft: 4 }}>
-                      {badge.description || ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {/* Affichage de tous les badges du référentiel, grisé si non débloqué */}
+            {/* Pagination : n'affiche que 6 badges, bouton pour voir plus */}
+            {(() => {
+              const referentiel = require('../lib/defisReferentiel').defisReferentiel;
+              const badgesToShow = showAllBadges ? referentiel : referentiel.slice(0, 6);
+              return (
+                <>
+                  <div className="badges-grid" style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:'1.2rem'}}>
+                    {badgesToShow.map((defi, i) => {
+                      const badgeObtenu = badges.some(b => b.nom === defi.nom) || badgesFastFood.some(b => b.nom === defi.nom);
+                      const badge = badges.find(b => b.nom === defi.nom) || badgesFastFood.find(b => b.nom === defi.nom);
+                      return (
+                        <BadgeCard
+                          key={i}
+                          badge={defi}
+                          obtenu={badgeObtenu}
+                          justUnlocked={badge && badge.justUnlocked}
+                          description={defi.description}
+                          style={badgeObtenu ? {} : {
+                            background: '#f5f5f5',
+                            color: '#bbb',
+                            opacity: 0.35,
+                            filter: 'grayscale(1)',
+                            boxShadow: 'none',
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  {referentiel.length > 6 && !showAllBadges && (
+                    <div style={{textAlign:'center',marginTop:'1.2rem'}}>
+                      <button style={{background:'#eee',color:'#888',border:'none',borderRadius:8,padding:'7px 18px',fontWeight:600,cursor:'pointer'}} onClick={()=>setShowAllBadges(true)}>
+                        Voir tous les badges
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
         </div>
         {/* Section dédiée Badges Fast Food */}
         <div style={{padding:'1.5rem', background:'#fffbe6', borderRadius:'15px', boxShadow:'0 2px 8px #ffe0b2', textAlign:'center', margin:'2rem 0'}}>

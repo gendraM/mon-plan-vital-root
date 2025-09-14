@@ -1,3 +1,4 @@
+import { getFastFoodRewards } from '../lib/fastFoodRewards';
 import { useState, useEffect } from 'react'
 import FlipNumbers from 'react-flip-numbers'
 // import FlipNumbers from 'react-flip-numbers'
@@ -55,7 +56,37 @@ const signauxSatieteList = [
   "Autre"
 ]
 
-export default function RepasBloc({ type, date, planCategorie, routineCount = 0, onSave, repasSemaine = [], extrasRestants }) {
+export default function RepasBloc({
+  type,
+  date,
+  planCategorie,
+  routineCount = 0,
+  onSave,
+  repasSemaine = [],
+  extrasRestants,
+  // Suppression des props planifiées, retour à la saisie manuelle
+  repasPrevu,
+  categoriePrevu,
+  quantitePrevu,
+  kcalPrevu
+}) {
+  // Déclaration des hooks d’état PRINCIPAUX tout en haut du composant (checklist React)
+  const [repasConforme, setRepasConforme] = useState(false);
+  const [aliment, setAliment] = useState('');
+  const [categorie, setCategorie] = useState('');
+  const [quantite, setQuantite] = useState('');
+  const [kcal, setKcal] = useState('');
+  // Auto-remplissage conditionnel des champs si repas conforme au planning ET données planifiées valides
+  useEffect(() => {
+    // Mode création strict : aucun champ existant et aucune id de repas (Next.js/edition)
+    const isCreation = !aliment && !categorie && !quantite && !kcal && !repasSemaine?.some(r => r.date === date && r.type === type);
+    if (repasConforme && isCreation) {
+      if (typeof repasPrevu === 'string' && repasPrevu.length > 0) setAliment(repasPrevu);
+      if (typeof categoriePrevu === 'string' && categoriePrevu.length > 0) setCategorie(categoriePrevu);
+      if ((typeof quantitePrevu === 'string' || typeof quantitePrevu === 'number') && String(quantitePrevu).length > 0) setQuantite(String(quantitePrevu));
+      if ((typeof kcalPrevu === 'string' || typeof kcalPrevu === 'number') && String(kcalPrevu).length > 0) setKcal(String(kcalPrevu));
+    }
+  }, [repasConforme, repasPrevu, categoriePrevu, quantitePrevu, kcalPrevu, aliment, categorie, quantite, kcal, repasSemaine, date, type]);
   // Ajout Fast food (déclaration unique, checklist respectée)
   const [isFastFood, setIsFastFood] = useState(false);
   const [fastFoodType, setFastFoodType] = useState('');
@@ -94,6 +125,17 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
     setFastFoodAliments(newAliments);
   };
 
+  // Auto-remplissage uniquement lors de la création d’un nouveau repas (jamais en édition)
+  useEffect(() => {
+    const isNew = !aliment && !categorie && !quantite && !kcal;
+    if (repasConforme && isNew) {
+      if (typeof repasPrevu === 'string' && repasPrevu.length > 0) setAliment(repasPrevu);
+      if (typeof categoriePrevu === 'string' && categoriePrevu.length > 0) setCategorie(categoriePrevu);
+      if ((typeof quantitePrevu === 'string' || typeof quantitePrevu === 'number') && String(quantitePrevu).length > 0) setQuantite(String(quantitePrevu));
+      if ((typeof kcalPrevu === 'string' || typeof kcalPrevu === 'number') && String(kcalPrevu).length > 0) setKcal(String(kcalPrevu));
+    }
+  }, [repasConforme, repasPrevu, categoriePrevu, quantitePrevu, kcalPrevu, aliment, categorie, quantite, kcal]);
+
   // Calcul automatique des kcal pour fast food (référentiel)
   useEffect(() => {
     setFastFoodAliments(fastFoodAliments.map(a => {
@@ -106,10 +148,6 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
   }, [fastFoodAliments]);
   // Validation stricte des props
   extrasRestants = typeof extrasRestants === 'number' && !isNaN(extrasRestants) ? extrasRestants : 0;
-  const [aliment, setAliment] = useState('');
-  const [categorie, setCategorie] = useState('');
-  const [quantite, setQuantite] = useState('');
-  const [kcal, setKcal] = useState('');
   const [estExtra, setEstExtra] = useState(false);
   const [satiete, setSatiete] = useState('');
   const [pourquoi, setPourquoi] = useState('');
@@ -181,6 +219,69 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Enregistrement du repas classique
+    // Si repas conforme au planning, enregistrement automatique
+    if (repasConforme) {
+      // On invite à saisir manuellement les kcal si non présentes
+      let kcalPlanning = kcal;
+      if (!kcalPlanning) {
+        alert("Merci de saisir manuellement les kcal du repas prévu pour le suivi.");
+        return;
+      }
+      // Pré-remplir aliment, catégorie, quantité, kcal avec le repas prévu si existant
+      let alimentFinal = aliment;
+      let categorieFinal = categorie;
+      let quantiteFinal = quantite;
+      let kcalFinal = kcalPlanning;
+      // On suppose que les valeurs du repas prévu sont accessibles via des props (repasPrevu, categoriePrevu, quantitePrevu, kcalPrevu)
+      if (!alimentFinal && typeof repasPrevu === 'string' && repasPrevu.length > 0) alimentFinal = repasPrevu;
+      if (!categorieFinal && typeof categoriePrevu === 'string' && categoriePrevu.length > 0) categorieFinal = categoriePrevu;
+      if (!quantiteFinal && typeof quantitePrevu === 'string' && quantitePrevu.length > 0) quantiteFinal = quantitePrevu;
+      if (!kcalFinal && typeof kcalPrevu === 'string' && kcalPrevu.length > 0) kcalFinal = kcalPrevu;
+      // Si une valeur reste vide, demander à l'utilisateur de la saisir manuellement
+      if (!alimentFinal || !categorieFinal || !quantiteFinal || !kcalFinal) {
+        alert("Merci de remplir manuellement les champs manquants (aliment, catégorie, quantité, kcal) pour assurer le suivi.");
+        return;
+      }
+      import('../lib/supabaseClient').then(({ supabase }) => {
+        supabase.auth.getUser().then(({ data: userData }) => {
+          const user_id = userData?.user?.id || null;
+          supabase.from('repas_reels').insert([
+            {
+              user_id,
+              date,
+              type,
+              aliment: alimentFinal,
+              categorie: categorieFinal,
+              quantite: quantiteFinal,
+              kcal: kcalFinal,
+              est_extra: false,
+              satiete,
+              pourquoi,
+              ressenti,
+              details_signaux: detailsSignaux,
+              repas_planifie_respecte: true
+            }
+          ]).then(({ error }) => {
+            if (error) {
+              alert('Erreur Supabase (repas planifié respecté): ' + error.message);
+            }
+          });
+        });
+      });
+      // Reset des hooks
+      setRepasConforme(false);
+      setAliment('');
+      setCategorie('');
+      setQuantite('');
+      setKcal('');
+      setEstExtra(false);
+      setSatiete('');
+      setPourquoi('');
+      setRessenti('');
+      setDetailsSignaux([]);
+      return;
+    }
     // Enregistrement du repas classique
     onSave && onSave({
       type, date, aliment, categorie, quantite, kcal,
@@ -258,6 +359,11 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
       </div>
 
       <form onSubmit={handleSubmit} style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        {/* Case à cocher Repas conforme au planning */}
+        <label style={{ display: 'block', marginBottom: 8 }}>
+          <input type="checkbox" checked={repasConforme} onChange={e => setRepasConforme(e.target.checked)} />
+          Repas conforme au planning
+        </label>
         {/* Message d’avertissement et suggestion si règle non respectée */}
         {isFastFood && fastFoodHistory.length > 0 && (
           (() => {
@@ -284,6 +390,29 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
             Tu débloques une récompense et tu progresses vers une meilleure alimentation !
           </div>
         )}
+          {/* Message de félicitations et suggestion de planification (fusion dynamique + astuce) */}
+          {isFastFood && (
+            (() => {
+              const rewards = getFastFoodRewards(fastFoodHistory);
+              let astuce = null;
+              if (fastFoodReward) {
+                astuce = <><br /><span style={{ fontWeight: 500 }}>Astuce : note la date du prochain créneau dans ton agenda pour maximiser ta récompense !</span></>;
+              } else if (fastFoodHistory.length > 0) {
+                const lastFastFood = fastFoodHistory[fastFoodHistory.length - 1];
+                const lastDate = new Date(lastFastFood.date);
+                const currentDate = new Date(date);
+                const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+                astuce = <><br /><span style={{ fontWeight: 500 }}>Suggestion : planifie le prochain fast food dans {45 - diffDays} jours.</span></>;
+              }
+              return (
+                <div style={{ background: rewards.confettis ? '#e8f5e9' : '#e3f2fd', color: rewards.confettis ? '#388e3c' : '#1976d2', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                  {rewards.message}
+                  {astuce}
+                  {rewards.confettis && <div style={{marginTop:8}}>🎉 Confettis ! Tu as débloqué le badge spécial Fast Food !</div>}
+                </div>
+              );
+            })()
+          )}
         {/* Saisie des aliments fast food si mode activé */}
         {isFastFood && (
           <div style={{ marginBottom: 16 }}>
@@ -350,7 +479,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
           onChange={e => setAliment(e.target.value)}
           placeholder="Saisissez un aliment"
           autoComplete="off"
-          required
+          required={!repasConforme}
           style={{ marginBottom: 0 }}
         />
         {/* ...existing code... */}
@@ -360,7 +489,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
           list="categories"
           value={categorie}
           onChange={e => setCategorie(e.target.value)}
-          required
+          required={!repasConforme}
         />
         <datalist id="categories">
           <option value="féculent" />
@@ -378,7 +507,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
         </datalist>
 
         <label>Quantité</label>
-        <input value={quantite} onChange={e => setQuantite(e.target.value)} required />
+  <input value={quantite} onChange={e => setQuantite(e.target.value)} required={!repasConforme} />
 
         <label>Kcal {loadingKcal && "(recherche...)"}</label>
   <input value={kcal} onChange={e => setKcal(e.target.value)} />
@@ -396,7 +525,7 @@ export default function RepasBloc({ type, date, planCategorie, routineCount = 0,
         </label>
 
         <label>Satiété respectée ?</label>
-        <select value={satiete} onChange={e => setSatiete(e.target.value)} required>
+  <select value={satiete} onChange={e => setSatiete(e.target.value)} required={!repasConforme}>
           <option value="">Choisir…</option>
           <option value="oui">Oui, j’ai respecté ma satiété</option>
           <option value="non">Non, j’ai dépassé ma satiété</option>

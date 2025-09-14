@@ -297,9 +297,10 @@ export default function Repas() {
           <tbody>
             {repas.map((r) => (
               <tr key={r.id}>
+                {/* Date + validation semaine */}
                 <td style={{ padding: 8, border: "1px solid #ddd", position: 'relative' }}>
-                  {r.date}
-                  {/* Affichage validation semaine et boutons UNIQUEMENT pour le dîner du dimanche */}
+                  {r.date || <span style={{ color: '#bbb' }}>—</span>}
+                  {/* Validation semaine (dîner du dimanche) */}
                   {(() => {
                     const d = new Date(r.date);
                     if (d.getDay() === 0 && r.type === "Dîner") {
@@ -319,43 +320,9 @@ export default function Repas() {
                         }}>
                           {r.validee ? 'Semaine validée' : 'Non validée'}
                           {r.validee ? (
-                            <button
-                              type="button"
-                              style={{
-                                background: "#b71c1c",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "2px 10px",
-                                fontWeight: 600,
-                                fontSize: 14,
-                                cursor: "pointer",
-                                marginLeft: 8
-                              }}
-                              onClick={() => handleDevaliderSemaine(r)}
-                              title="Dévalider la semaine"
-                            >
-                              ❌
-                            </button>
+                            <button type="button" style={{ background: "#b71c1c", color: "#fff", border: "none", borderRadius: 8, padding: "2px 10px", fontWeight: 600, fontSize: 14, cursor: "pointer", marginLeft: 8 }} onClick={() => handleDevaliderSemaine(r)} title="Dévalider la semaine">❌</button>
                           ) : (
-                            <button
-                              type="button"
-                              style={{
-                                background: "#43a047",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "2px 10px",
-                                fontWeight: 600,
-                                fontSize: 14,
-                                cursor: "pointer",
-                                marginLeft: 8
-                              }}
-                              onClick={() => handleValiderSemaine(r)}
-                              title="Valider la semaine"
-                            >
-                              ✓
-                            </button>
+                            <button type="button" style={{ background: "#43a047", color: "#fff", border: "none", borderRadius: 8, padding: "2px 10px", fontWeight: 600, fontSize: 14, cursor: "pointer", marginLeft: 8 }} onClick={() => handleValiderSemaine(r)} title="Valider la semaine">✓</button>
                           )}
                         </span>
                       );
@@ -363,10 +330,22 @@ export default function Repas() {
                     return null;
                   })()}
                 </td>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.type}</td>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.aliment}</td>
+                {/* Type de repas */}
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.type || <span style={{ color: '#bbb' }}>—</span>}</td>
+                {/* Aliment principal, indication planifié */}
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>
-                  {r.aliment}
+                  {r.aliment ? (
+                    <span>
+                      {r.aliment}
+                      {r.planifie && (
+                        <span style={{ marginLeft: 6, color: '#1976d2', fontWeight: 600, fontSize: '0.95em', background: '#e3f2fd', borderRadius: 4, padding: '2px 6px' }} title="Repas planifié">Planifié</span>
+                      )}
+                    </span>
+                  ) : <span style={{ color: '#bbb' }}>—</span>}
+                </td>
+                {/* Catégorie, icône fast-food séparée */}
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>
+                  {r.categorie ? r.categorie : <span style={{ color: '#bbb' }}>—</span>}
                   {fastFoodRepas.some(ff =>
                     ff.date === r.date &&
                     ff.aliments?.some(a =>
@@ -376,37 +355,14 @@ export default function Repas() {
                     <span style={{ marginLeft: 6, fontSize: '1.3em' }} title="Fast food">🍔</span>
                   )}
                 </td>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.categorie}</td>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.quantite}</td>
-                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.kcal}</td>
+                {/* Quantité */}
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.quantite ? r.quantite : <span style={{ color: '#bbb' }}>—</span>}</td>
+                {/* Kcal */}
+                <td style={{ padding: 8, border: "1px solid #ddd" }}>{r.kcal ? r.kcal : <span style={{ color: '#bbb' }}>—</span>}</td>
+                {/* Actions */}
                 <td style={{ padding: 8, border: "1px solid #ddd" }}>
-                  <button
-                    style={{
-                      background: "#1976d2",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "4px 12px",
-                      cursor: "pointer",
-                      marginRight: 8,
-                    }}
-                    onClick={() => handleEdit(r)}
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    style={{
-                      background: "#f44336",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "4px 12px",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleDelete(r.id)}
-                  >
-                    Supprimer
-                  </button>
+                  <button style={{ background: "#1976d2", color: "#fff", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", marginRight: 8 }} onClick={() => handleEdit(r)}>Modifier</button>
+                  <button style={{ background: "#f44336", color: "#fff", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }} onClick={() => handleDelete(r.id)}>Supprimer</button>
                 </td>
               </tr>
             ))}

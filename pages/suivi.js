@@ -858,6 +858,10 @@ export default function Suivi() {
               )}
             </div>
             <RepasBloc
+              repasPrevu={typeof repasPlan[selectedType]?.aliment === 'string' ? repasPlan[selectedType].aliment : ''}
+              categoriePrevu={typeof repasPlan[selectedType]?.categorie === 'string' ? repasPlan[selectedType].categorie : ''}
+              quantitePrevu={typeof repasPlan[selectedType]?.quantite === 'string' || typeof repasPlan[selectedType]?.quantite === 'number' ? String(repasPlan[selectedType].quantite) : ''}
+              kcalPrevu={typeof repasPlan[selectedType]?.kcal === 'string' || typeof repasPlan[selectedType]?.kcal === 'number' ? String(repasPlan[selectedType].kcal) : ''}
               type={selectedType}
               date={selectedDate}
               planCategorie={repasPlan[selectedType]?.categorie}

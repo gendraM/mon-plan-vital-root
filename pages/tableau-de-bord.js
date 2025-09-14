@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getFastFoodRewards } from "../lib/fastFoodRewards";
 import { supabase } from "../lib/supabaseClient";
 import { Line, Pie, Doughnut } from "react-chartjs-2";
 import TimelineProgression from "../components/TimelineProgression";
@@ -58,6 +59,8 @@ export default function TableauDeBord() {
   const [evolutionPoids, setEvolutionPoids] = useState([]);
   // Ajout fast food
   const [fastFoodHistory, setFastFoodHistory] = useState([]);
+  // Ajout badges fast food
+  const [badgesFastFood, setBadgesFastFood] = useState([]);
   const [fastFoodCount, setFastFoodCount] = useState(0);
   const [nextFastFoodDate, setNextFastFoodDate] = useState(null);
   const [fastFoodDelay, setFastFoodDelay] = useState(0);
@@ -483,6 +486,33 @@ export default function TableauDeBord() {
               Aucun fast food consommé sur la période.<br/>Tu es libre d’en planifier un !
             </div>
           )}
+            {/* Message dynamique et astuce/suggestion fast food */}
+            {(() => {
+              const rewards = getFastFoodRewards(fastFoodHistory);
+              let astuce = null;
+              if (fastFoodHistory.length > 0 && nextFastFoodDate) {
+                const today = new Date();
+                const diffDays = Math.max(0, Math.ceil((nextFastFoodDate - today) / (1000 * 60 * 60 * 24)));
+                if (diffDays === 0) {
+                  astuce = <><br /><span style={{ fontWeight: 500 }}>Astuce : note la date du prochain créneau dans ton agenda pour maximiser ta récompense !</span></>;
+                } else {
+                  astuce = <><br /><span style={{ fontWeight: 500 }}>Suggestion : planifie le prochain fast food dans {diffDays} jours.</span></>;
+                }
+              }
+              return (
+                <div style={{ background: rewards.confettis ? '#e8f5e9' : '#e3f2fd', color: rewards.confettis ? '#388e3c' : '#1976d2', padding: 10, borderRadius: 8, marginTop: 12 }}>
+                  {rewards.message}
+                  {astuce}
+                  {rewards.confettis && <div style={{marginTop:8}}>🎉 Confettis ! Tu as débloqué le badge spécial Fast Food !</div>}
+                </div>
+              );
+            })()}
+            <button
+              style={{marginTop:12, padding:'7px 18px', background:'#e65100', color:'#fff', border:'none', borderRadius:8, fontWeight:600, cursor:'pointer'}}
+              onClick={()=>window.location.href='/historique-fast-food'}
+            >
+              En savoir plus
+            </button>
         </div>
         {/* Carte satiété */}
         <div style={{background:'#fff', borderRadius:14, boxShadow:'0 2px 8px #e0e0e0', padding:'1.2rem 2rem', minWidth:170, textAlign:'center'}}>
@@ -675,25 +705,49 @@ export default function TableauDeBord() {
           }}
         >
           <h2 style={{ marginTop: 0, color: COLORS[3] }}>Mes Succès & Badges</h2>
-          {badges.length === 0 ? (
-            <p style={{ color: "#666" }}>Aucun badge débloqué pour le moment.</p>
+            {badges.length === 0 && badgesFastFood.length === 0 ? (
+              <p style={{ color: "#666" }}>Aucun badge débloqué pour le moment.</p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  fontSize: "1.12rem",
+                  color: "#444",
+                  fontWeight: 600,
+                }}
+              >
+                {badges.map((badge, i) => (
+                  <li key={i} style={{ marginBottom: "0.5rem" }}>
+                    🏅 <span>{badge.nom}</span>
+                    <span style={{ color: "#888", fontSize: "0.95rem", marginLeft: 4 }}>
+                      {badge.description || ""}
+                    </span>
+                  </li>
+                ))}
+                {badgesFastFood && badgesFastFood.map((badge, i) => (
+                  <li key={"ff-"+i} style={{ marginBottom: "0.5rem" }}>
+                    🍔 <span>{badge.nom}</span>
+                    <span style={{ color: "#e65100", fontSize: "0.95rem", marginLeft: 4 }}>
+                      {badge.description || ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+        </div>
+        {/* Section dédiée Badges Fast Food */}
+        <div style={{padding:'1.5rem', background:'#fffbe6', borderRadius:'15px', boxShadow:'0 2px 8px #ffe0b2', textAlign:'center', margin:'2rem 0'}}>
+          <h2 style={{marginTop:0, color:'#e65100'}}>Badges Fast Food</h2>
+          {badgesFastFood.length === 0 ? (
+            <p style={{color:'#e65100'}}>Aucun badge fast food débloqué pour le moment.</p>
           ) : (
-            <ul
-              style={{
-                listStyle: "none",
-                padding: 0,
-                margin: 0,
-                fontSize: "1.12rem",
-                color: "#444",
-                fontWeight: 600,
-              }}
-            >
-              {badges.map((badge, i) => (
-                <li key={i} style={{ marginBottom: "0.5rem" }}>
-                  🏅 <span>{badge.nom}</span>
-                  <span style={{ color: "#888", fontSize: "0.95rem", marginLeft: 4 }}>
-                    {badge.description || ""}
-                  </span>
+            <ul style={{listStyle:'none', padding:0, margin:0, fontSize:'1.12rem', color:'#e65100', fontWeight:600}}>
+              {badgesFastFood.map((badge, i) => (
+                <li key={i} style={{marginBottom:'0.5rem'}}>
+                  🍔 <span>{badge.nom}</span>
+                  <span style={{color:'#888', fontSize:'0.95rem', marginLeft:4}}>{badge.description || ''}</span>
                 </li>
               ))}
             </ul>

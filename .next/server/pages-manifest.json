@@ -2,7 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/suivi-poids": "pages/suivi-poids.js",
-  "/repas": "pages/repas.js",
-  "/suivi": "pages/suivi.js"
+  "/suivi": "pages/suivi.js",
+  "/tableau-de-bord": "pages/tableau-de-bord.js",
+  "/historique-notes-repas": "pages/historique-notes-repas.js"
 }

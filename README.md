@@ -1,3 +1,15 @@
+# Améliorations futures
+
+## Suggestions IA symboliques à partir des notes
+
+Une structure IA symbolique a été ajoutée dans `components/RepasBloc.js` :
+- Tableau d’analyse des repas
+- Base de règles symboliques
+- Fonction d’analyse pour suggestions/statistiques
+
+Cette structure permet d’extraire des suggestions personnalisées à partir des notes et du contexte alimentaire, sans modifier les fonctionnalités existantes. Elle pourra évoluer vers une IA plus avancée (NLP, scoring, etc.) et être enrichie selon les besoins.
+
+Les suggestions sont affichées sous le formulaire si des motifs sont détectés dans les repas de la semaine.
 # Mon Plan Vital
 
 ## Description

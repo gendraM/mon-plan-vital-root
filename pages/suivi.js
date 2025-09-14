@@ -1,3 +1,4 @@
+// ...existing code...
 // ----------- HANDLER POUR LA SAUVEGARDE D'UN REPAS -----------
 // La fonction handleSaveRepas est définie plus bas dans le composant principal, après l’import unique de Supabase.
 import React, { useState, useEffect, useRef } from 'react';
@@ -353,6 +354,8 @@ export default function Suivi() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0,10));
   const [showInfo, setShowInfo] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Hook pour afficher/masquer l’historique des repas avec note
+  const [showNotesHistory, setShowNotesHistory] = useState(false);
 
   // Plan de repas du jour (repas planifiés)
   const [repasPlan, setRepasPlan] = useState({});
@@ -431,13 +434,23 @@ export default function Suivi() {
     ? Math.round((caloriesDuJour / objectifCalorique) * 100)
     : 0;
   // Calcul du score discipline journalier (repas alignés)
+  // Fonction utilitaire pour score discipline
+  function isRepasAligne(r, plan) {
+    // Repas conforme au planning
+    if (r.repas_planifie_respecte) return true;
+    // Si extra ou fast food, non aligné
+    if (r.est_extra || r.isFastFood || r.fastFoodType) return false;
+    // Si aliment modifié
+    if (plan && plan.aliment && r.aliment && plan.aliment.trim().toLowerCase() === r.aliment.trim().toLowerCase()) {
+      return true;
+    }
+    return false;
+  }
   const repasDuJour = repasSemaine.filter(r => r.date === selectedDate);
   let nbAlignes = 0;
   repasDuJour.forEach(r => {
     const plan = repasPlan[r.type];
-    if (plan && plan.aliment && r.aliment && plan.aliment.trim().toLowerCase() === r.aliment.trim().toLowerCase()) {
-      nbAlignes++;
-    }
+    if (isRepasAligne(r, plan)) nbAlignes++;
   });
   const scoreJournalier = repasDuJour.length > 0 ? Math.round((nbAlignes / repasDuJour.length) * 100) : 0;
   // Score hebdomadaire (repas alignés sur la semaine)
@@ -451,9 +464,7 @@ export default function Suivi() {
   let nbAlignesHebdo = 0;
   semaineDates.forEach(r => {
     const plan = repasPlan[r.type];
-    if (plan && plan.aliment && r.aliment && plan.aliment.trim().toLowerCase() === r.aliment.trim().toLowerCase()) {
-      nbAlignesHebdo++;
-    }
+    if (isRepasAligne(r, plan)) nbAlignesHebdo++;
   });
   const scoreHebdomadaire = semaineDates.length > 0 ? Math.round((nbAlignesHebdo / semaineDates.length) * 100) : 0;
   // Progression pour les badges
@@ -951,11 +962,76 @@ export default function Suivi() {
           <span style={{ fontWeight: 700, color: "#1976d2", fontSize: 18 }}>{scoreJournalier}%</span>
           <ProgressBar value={scoreJournalier} color="#1976d2" />
         </div>
+        {/* Bouton En savoir plus sous le score de satiété */}
+        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+          <div style={{
+            display: 'inline-block',
+            border: '3px solid #ff9800',
+            borderRadius: '14px',
+            boxShadow: '0 4px 18px #ff980055',
+            background: '#fff3e0',
+            padding: '18px 28px',
+            margin: '12px 0',
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowNotesHistory(v => !v)}
+              style={{
+                background: '#ff9800',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 24px',
+                fontWeight: 700,
+                fontSize: 18,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #ff980055',
+                letterSpacing: '1px',
+                outline: '2px solid #fff',
+              }}
+            >
+              {showNotesHistory ? 'Masquer' : 'En savoir plus'}
+            </button>
+            <div style={{fontSize:14, color:'#ff9800', fontWeight:600, marginTop:8}}>
+              Historique des notes repas (diagnostic)
+            </div>
+          </div>
+        </div>
         <div style={{ marginTop: 8 }}>
           <span style={{ fontWeight: 500 }}>Score hebdomadaire : </span>
           <span style={{ fontWeight: 700, color: "#43a047", fontSize: 18 }}>{scoreHebdomadaire}%</span>
           <ProgressBar value={scoreHebdomadaire} color="#43a047" />
         </div>
+        {showNotesHistory && (
+          (() => {
+            const repasAvecNote = repasSemaine.filter(r => r.note && r.note.trim().length > 0);
+            if (repasAvecNote.length === 0) {
+              return <div style={{ marginTop: 16, color: '#888' }}>Aucun repas avec note cette semaine.</div>;
+            }
+            return (
+              <div style={{ marginTop: 16, background: '#f5f5f5', borderRadius: 8, padding: 16 }}>
+                <strong>Repas avec note (analyse comportementale) :</strong>
+                <ul style={{ marginTop: 8, paddingLeft: 0 }}>
+                  {repasAvecNote.map((r, i) => (
+                    <li key={i} style={{ marginBottom: 12, listStyle: 'none', borderBottom: '1px solid #e0e0e0', paddingBottom: 8 }}>
+                      <div><b>Date :</b> {r.date} <b>Type :</b> {r.type}</div>
+                      <div><b>Aliment :</b> {r.aliment} <b>Catégorie :</b> {r.categorie}</div>
+                      <div><b>Quantité :</b> {r.quantite} <b>Kcal :</b> {r.kcal}</div>
+                      <div><b>Note :</b> {r.note}</div>
+                      {r.ressenti && <div><b>Ressenti :</b> {r.ressenti}</div>}
+                      {r.pourquoi && <div><b>Pourquoi :</b> {r.pourquoi}</div>}
+                      {r.details_signaux && r.details_signaux.length > 0 && (
+                        <div><b>Signaux ignorés :</b> {Array.isArray(r.details_signaux) ? r.details_signaux.join(', ') : r.details_signaux}</div>
+                      )}
+                      {r.est_extra && <div style={{ color: '#b71c1c' }}><b>Extra</b></div>}
+                      {(r.isFastFood || r.fastFoodType) && <div style={{ color: '#b71c1c' }}><b>Fast food</b></div>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()
+        )}
       </div>
 
       {/* ----------- AVERTISSEMENT DÉPASSEMENT CALORIQUE ----------- */}

@@ -71,11 +71,15 @@ export default function RepasBloc({
   kcalPrevu
 }) {
   // Déclaration des hooks d’état PRINCIPAUX tout en haut du composant (checklist React)
+  // Ajout d’un état pour afficher l’erreur Supabase (doit être tout en haut)
+  const [supabaseError, setSupabaseError] = useState(null);
   const [repasConforme, setRepasConforme] = useState(false);
   const [aliment, setAliment] = useState('');
   const [categorie, setCategorie] = useState('');
   const [quantite, setQuantite] = useState('');
   const [kcal, setKcal] = useState('');
+  // Champ Note pour analyse comportementale
+  const [note, setNote] = useState('');
   // Auto-remplissage conditionnel des champs si repas conforme au planning ET données planifiées valides
   useEffect(() => {
     // Mode création strict : aucun champ existant et aucune id de repas (Next.js/edition)
@@ -186,6 +190,47 @@ export default function RepasBloc({
     // Rafraîchir la liste ou l’état local si besoin
   }
   // ...existing code...
+  // État pour afficher ou masquer l'historique des repas avec note
+  const [showNotesHistory, setShowNotesHistory] = useState(false);
+// --- Structure IA symbolique pour suggestions/statistiques à partir des notes ---
+// Tableau d’analyse des repas (exemple, à remplir dynamiquement depuis la base ou props)
+const analyseRepas = [
+  // Exemple de structure : chaque repas avec note, date, type, émotions, etc.
+  // { date: '2025-09-14', type: 'Déjeuner', note: 'Fatigue, envie de sucre', ressenti: 'lourd', pourquoi: 'stress' }
+];
+
+// Base de règles symboliques pour suggestions/statistiques
+const iaRules = [
+  {
+    condition: repas => repas.note && repas.note.toLowerCase().includes('fatigue'),
+    suggestion: "Vous avez souvent noté de la fatigue. Pensez à adapter votre rythme de sommeil ou à privilégier des aliments énergétiques."
+  },
+  {
+    condition: repas => repas.pourquoi && repas.pourquoi.toLowerCase().includes('stress'),
+    suggestion: "Le stress revient dans vos repas. Essayez de repérer les déclencheurs et d’intégrer des pauses ou des activités relaxantes."
+  },
+  {
+    condition: repas => repas.ressenti === 'lourd',
+    suggestion: "Plusieurs repas lourds : surveillez les quantités et la composition pour retrouver un ressenti plus léger."
+  }
+  // Ajoutez facilement d’autres règles ici
+];
+
+// Fonction d’analyse symbolique (retourne suggestions/statistiques)
+function getSuggestionsFromNotes(repasList) {
+  const suggestions = [];
+  iaRules.forEach(rule => {
+    repasList.forEach(repas => {
+      if (rule.condition(repas)) {
+        suggestions.push(rule.suggestion);
+      }
+    });
+  });
+  // Suppression des doublons
+  return [...new Set(suggestions)];
+}
+
+// --- Fin structure IA symbolique ---
 
   // Suggestion automatique de catégorie et kcal selon l'aliment choisi (référentiel)
   // Remplissage automatique de la catégorie selon l'aliment saisi (référentiel local uniquement)
@@ -222,23 +267,19 @@ export default function RepasBloc({
     // Enregistrement du repas classique
     // Si repas conforme au planning, enregistrement automatique
     if (repasConforme) {
-      // On invite à saisir manuellement les kcal si non présentes
       let kcalPlanning = kcal;
       if (!kcalPlanning) {
         alert("Merci de saisir manuellement les kcal du repas prévu pour le suivi.");
         return;
       }
-      // Pré-remplir aliment, catégorie, quantité, kcal avec le repas prévu si existant
       let alimentFinal = aliment;
       let categorieFinal = categorie;
       let quantiteFinal = quantite;
       let kcalFinal = kcalPlanning;
-      // On suppose que les valeurs du repas prévu sont accessibles via des props (repasPrevu, categoriePrevu, quantitePrevu, kcalPrevu)
       if (!alimentFinal && typeof repasPrevu === 'string' && repasPrevu.length > 0) alimentFinal = repasPrevu;
       if (!categorieFinal && typeof categoriePrevu === 'string' && categoriePrevu.length > 0) categorieFinal = categoriePrevu;
       if (!quantiteFinal && typeof quantitePrevu === 'string' && quantitePrevu.length > 0) quantiteFinal = quantitePrevu;
       if (!kcalFinal && typeof kcalPrevu === 'string' && kcalPrevu.length > 0) kcalFinal = kcalPrevu;
-      // Si une valeur reste vide, demander à l'utilisateur de la saisir manuellement
       if (!alimentFinal || !categorieFinal || !quantiteFinal || !kcalFinal) {
         alert("Merci de remplir manuellement les champs manquants (aliment, catégorie, quantité, kcal) pour assurer le suivi.");
         return;
@@ -253,23 +294,25 @@ export default function RepasBloc({
               type,
               aliment: alimentFinal,
               categorie: categorieFinal,
-              quantite: quantiteFinal,
-              kcal: kcalFinal,
+              quantite: quantiteFinal === '' ? null : isNaN(Number(quantiteFinal)) ? quantiteFinal : Number(quantiteFinal),
+              kcal: kcalFinal === '' ? null : isNaN(Number(kcalFinal)) ? kcalFinal : Number(kcalFinal),
               est_extra: false,
               satiete,
               pourquoi,
               ressenti,
               details_signaux: detailsSignaux,
-              repas_planifie_respecte: true
+              repas_planifie_respecte: true,
+              note
             }
           ]).then(({ error }) => {
             if (error) {
-              alert('Erreur Supabase (repas planifié respecté): ' + error.message);
+              setSupabaseError(error.message);
+            } else {
+              setSupabaseError(null);
             }
           });
         });
       });
-      // Reset des hooks
       setRepasConforme(false);
       setAliment('');
       setCategorie('');
@@ -280,6 +323,7 @@ export default function RepasBloc({
       setPourquoi('');
       setRessenti('');
       setDetailsSignaux([]);
+      setNote('');
       return;
     }
     // Enregistrement du repas classique
@@ -287,7 +331,8 @@ export default function RepasBloc({
       type, date, aliment, categorie, quantite, kcal,
       est_extra: estExtra,
       satiete, pourquoi, ressenti,
-      details_signaux: detailsSignaux
+      details_signaux: detailsSignaux,
+      note
     });
     // Enregistrement du fast food dans Supabase si sélectionné
     if (isFastFood) {
@@ -321,6 +366,7 @@ export default function RepasBloc({
     setPourquoi('');
     setRessenti('');
     setDetailsSignaux([]);
+    setNote('');
     // setSuggestions([])
   }
 
@@ -344,7 +390,7 @@ export default function RepasBloc({
   }
 
   return (
-    <div>
+  <div>
       {/* Compteur flipboard stylisé pour extras restants */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Extras restants</span>
@@ -358,7 +404,22 @@ export default function RepasBloc({
         />
       </div>
 
-      <form onSubmit={handleSubmit} style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+  <form onSubmit={handleSubmit} style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        {/* Affichage du message d’erreur Supabase */}
+        {supabaseError && (
+          <div style={{ color: '#b71c1c', background: '#ffebee', padding: 8, borderRadius: 6, marginBottom: 12 }}>
+            <strong>Erreur d’enregistrement Supabase :</strong> {supabaseError}
+          </div>
+        )}
+        {/* Champ Note pour analyse comportementale */}
+        <label>Note (contexte, analyse, réflexion)</label>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="Ex : contexte, émotions, réflexion, objectif, etc."
+          rows={2}
+          style={{ width: '100%', marginBottom: 12 }}
+        />
         {/* Case à cocher Repas conforme au planning */}
         <label style={{ display: 'block', marginBottom: 8 }}>
           <input type="checkbox" checked={repasConforme} onChange={e => setRepasConforme(e.target.checked)} />
@@ -622,6 +683,59 @@ export default function RepasBloc({
 
         <button type="submit" style={{ marginTop: 16 }}>Enregistrer ce repas</button>
       </form>
+      {/* Suggestions IA issues des notes (analyse symbolique) */}
+      {repasSemaine.length > 0 && (
+        (() => {
+          const suggestions = getSuggestionsFromNotes(repasSemaine);
+          if (suggestions.length === 0) return null;
+          return (
+            <div style={{ background: '#e3f2fd', color: '#1976d2', borderRadius: 8, padding: 12, marginTop: 16 }}>
+              <strong>Suggestions personnalisées (analyse IA symbolique) :</strong>
+              <ul style={{ marginTop: 8 }}>
+                {suggestions.map((s, i) => (
+                  <li key={i} style={{ marginBottom: 4 }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()
+      )}
+      {/* Bouton En savoir plus pour afficher l'historique des repas avec note */}
+      <div style={{ marginTop: 24 }}>
+        <button type="button" onClick={() => setShowNotesHistory(v => !v)} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>
+          {showNotesHistory ? 'Masquer' : 'En savoir plus'}
+        </button>
+      </div>
+      {showNotesHistory && (
+        (() => {
+          const repasAvecNote = repasSemaine.filter(r => r.note && r.note.trim().length > 0);
+          if (repasAvecNote.length === 0) {
+            return <div style={{ marginTop: 16, color: '#888' }}>Aucun repas avec note cette semaine.</div>;
+          }
+          return (
+            <div style={{ marginTop: 16, background: '#f5f5f5', borderRadius: 8, padding: 16 }}>
+              <strong>Repas avec note (analyse comportementale) :</strong>
+              <ul style={{ marginTop: 8, paddingLeft: 0 }}>
+                {repasAvecNote.map((r, i) => (
+                  <li key={i} style={{ marginBottom: 12, listStyle: 'none', borderBottom: '1px solid #e0e0e0', paddingBottom: 8 }}>
+                    <div><b>Date :</b> {r.date} <b>Type :</b> {r.type}</div>
+                    <div><b>Aliment :</b> {r.aliment} <b>Catégorie :</b> {r.categorie}</div>
+                    <div><b>Quantité :</b> {r.quantite} <b>Kcal :</b> {r.kcal}</div>
+                    <div><b>Note :</b> {r.note}</div>
+                    {r.ressenti && <div><b>Ressenti :</b> {r.ressenti}</div>}
+                    {r.pourquoi && <div><b>Pourquoi :</b> {r.pourquoi}</div>}
+                    {r.details_signaux && r.details_signaux.length > 0 && (
+                      <div><b>Signaux ignorés :</b> {Array.isArray(r.details_signaux) ? r.details_signaux.join(', ') : r.details_signaux}</div>
+                    )}
+                    {r.est_extra && <div style={{ color: '#b71c1c' }}><b>Extra</b></div>}
+                    {(r.isFastFood || r.fastFoodType) && <div style={{ color: '#b71c1c' }}><b>Fast food</b></div>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()
+      )}
     </div>
   )
 }

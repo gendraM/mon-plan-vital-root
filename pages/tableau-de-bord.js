@@ -52,6 +52,8 @@ function getMotivationMessage({ progression, extras, humeurCounts, tauxSatiete }
 }
 
 export default function TableauDeBord() {
+  // Hook pour afficher/masquer l’historique des notes repas (diagnostic)
+  const [showNotesHistory, setShowNotesHistory] = useState(false);
   // Ajout pour la validation des semaines (fast food et extras)
   const [semainesValidees, setSemainesValidees] = useState([]);
   // Ajout : données d’évolution extras et poids
@@ -627,6 +629,41 @@ export default function TableauDeBord() {
           <p style={{ color: "#555" }}>
             des repas ont été pris par faim réelle.
           </p>
+          {/* Bouton et historique des notes repas (diagnostic) */}
+          <div style={{marginTop:24}}>
+            <div style={{
+              display: 'inline-block',
+              border: '3px solid #ff9800',
+              borderRadius: '14px',
+              boxShadow: '0 4px 18px #ff980055',
+              background: '#fff3e0',
+              padding: '18px 28px',
+              margin: '12px 0',
+            }}>
+              <button
+                type="button"
+                onClick={() => window.location.href='/historique-notes-repas'}
+                style={{
+                  background: '#ff9800',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '12px 24px',
+                  fontWeight: 700,
+                  fontSize: 18,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px #ff980055',
+                  letterSpacing: '1px',
+                  outline: '2px solid #fff',
+                }}
+              >
+                Consulter l'historique des notes repas
+              </button>
+              <div style={{fontSize:14, color:'#ff9800', fontWeight:600, marginTop:8}}>
+                Historique des notes repas (diagnostic)
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* --- Extras de la semaine --- */}

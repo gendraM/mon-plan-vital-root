@@ -1,3 +1,25 @@
+// Bouton retour à l’accueil
+function RetourAccueil() {
+  return (
+    <div style={{ margin: '2rem 0 1.5rem 0', textAlign: 'center' }}>
+      <Link href="/">
+        <button style={{
+          background: '#1976d2',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 8,
+          padding: '10px 28px',
+          fontWeight: 700,
+          fontSize: 17,
+          cursor: 'pointer',
+          boxShadow: '0 1px 6px #e0e0e0',
+        }}>
+          🏠 Retour à l’accueil
+        </button>
+      </Link>
+    </div>
+  );
+}
 // ...existing code...
 // ----------- HANDLER POUR LA SAUVEGARDE D'UN REPAS -----------
 // La fonction handleSaveRepas est définie plus bas dans le composant principal, après l’import unique de Supabase.
@@ -167,15 +189,25 @@ function getProgressionMessage(history, palier) {
   const lastMilestone = milestonesUnlocked.length > 0 ? milestonesUnlocked[milestonesUnlocked.length-1] : null;
   const currentStreak = history[0]?.count <= 1 ? streak : 0;
   const nextMilestoneObj = PROGRESSION_MILESTONES.find(m => m.streak > currentStreak);
-  return {
-    badgeMessage: lastMilestone?.msg,
-    milestone: lastMilestone?.streak,
-    interruption: interruption && history[0]?.isCurrent,
-    nextMilestone: nextMilestoneObj,
-    weeksToNext: nextMilestoneObj ? nextMilestoneObj.streak - currentStreak : 0,
-    streak: currentStreak,
-    allMilestones: milestonesUnlocked
-  };
+  return (
+    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+      {/* ...existing code... */}
+      <div style={{textAlign:'center', marginTop:'3.5rem', display:'flex', flexWrap:'wrap', justifyContent:'center', gap:'1.2rem'}}>
+        <Link href="/tableau-de-bord">
+          <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:17, cursor:'pointer', boxShadow:'0 1px 6px #e0e0e0'}}>🏠 Retour au tableau de bord</button>
+        </Link>
+        <Link href="/defis">
+          <button style={{background:'#ff9800', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:17, cursor:'pointer', boxShadow:'0 1px 6px #e0e0e0'}}>🎯 Voir mes défis</button>
+        </Link>
+        <Link href="/plan">
+          <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:17, cursor:'pointer', boxShadow:'0 1px 6px #e0e0e0'}}>📅 Planifier mes repas</button>
+        </Link>
+        <Link href="/">
+          <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:17, cursor:'pointer', boxShadow:'0 1px 6px #e0e0e0'}}>🏠 Accueil</button>
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function ProgressionHistory({ history }) {

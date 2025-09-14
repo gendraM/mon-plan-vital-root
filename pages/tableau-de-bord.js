@@ -820,6 +820,23 @@ export default function TableauDeBord() {
             🥗 Voir mon suivi
           </button>
         </Link>
+        <Link href="/defis">
+          <button
+            style={{
+              background: "#ff9800",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px 28px",
+              fontWeight: 700,
+              fontSize: 17,
+              cursor: "pointer",
+              boxShadow: "0 1px 6px #e0e0e0",
+            }}
+          >
+            🎯 Mes défis
+          </button>
+        </Link>
         <Link href="/plan">
           <button
             style={{

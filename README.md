@@ -1,15 +1,27 @@
-# Améliorations futures
+# Fonctionnalité : Mini-défis comportementaux
 
-## Suggestions IA symboliques à partir des notes
+## Intégration des 10 mini-défis
 
-Une structure IA symbolique a été ajoutée dans `components/RepasBloc.js` :
-- Tableau d’analyse des repas
-- Base de règles symboliques
-- Fonction d’analyse pour suggestions/statistiques
+Les 10 mini-défis sont intégrés dans l’application conformément au cahier des charges :
+- Référentiel JS/TS des défis dans `lib/defisReferentiel.js`
+- Initialisation automatique pour chaque utilisateur via `lib/initDefisUser.js` (aucun doublon, aucune suppression)
+- Suivi et progression dans la table Supabase `defis`
+- Composant UI dédié dans `pages/defis.js` : affichage, progression, feedback visuel
+- Respect de la méthode de travail et de la checklist à chaque étape
 
-Cette structure permet d’extraire des suggestions personnalisées à partir des notes et du contexte alimentaire, sans modifier les fonctionnalités existantes. Elle pourra évoluer vers une IA plus avancée (NLP, scoring, etc.) et être enrichie selon les besoins.
+### Checklist de validation pour la fonctionnalité défis
+- [x] Tous les hooks, variables et handlers/fonctions utilisés dans le rendu sont initialisés avant usage
+- [x] Vérification explicite : tout handler/fonction utilisé dans le rendu (ex : onClick, onChange, etc.) est présent et initialisé dans le composant principal avant le rendu JSX
+- [x] Aucune déclaration en double (hook, variable, fonction)
+- [x] La nouvelle logique est insérée après l’initialisation des variables nécessaires
+- [x] Contrôle des erreurs effectué (compilation, runtime, rendu)
+- [x] Test du rendu dans les différents cas d’usage
+- [x] Validation finale : la checklist est respectée
+- [x] Vérification de la portée et de l’ordre d’exécution des hooks et variables (tout doit être dans le composant, dans l’ordre logique)
+- [x] Relecture du code pour repérer toute utilisation avant déclaration ou hors contexte React
+- [x] Toute amélioration ou ajout s’intègre dans l’univers du code existant : aucune suppression ou modification ne doit générer la perte d’une fonction, d’une logique ou d’un fonctionnement. Aucun conflit, aucune anomalie ne doit être créée. Si un risque est détecté, il doit être signalé et une alternative sans risque doit être proposée.
 
-Les suggestions sont affichées sous le formulaire si des motifs sont détectés dans les repas de la semaine.
+---
 # Mon Plan Vital
 
 ## Description

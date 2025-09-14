@@ -32,7 +32,7 @@ const Navigation = () => {
                     <Link href="/pause">Pause mentale</Link>
                 </li>
                 <li>
-                    <Link href="/defis">Défi en cours</Link>
+                    <Link href="/defis">Mes défis</Link>
                 </li>
                 <li>
                     <Link href="/plan">Plan alimentaire</Link>

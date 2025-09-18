@@ -2,7 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/": "pages/index.js",
+  "/profil": "pages/profil.js",
   "/suivi-poids": "pages/suivi-poids.js",
-  "/tableau-de-bord": "pages/tableau-de-bord.js",
-  "/defis": "pages/defis.js"
+  "/suivi": "pages/suivi.js"
 }
